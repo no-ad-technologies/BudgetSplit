@@ -1,0 +1,16 @@
+# Keep the Docker build context small and free of secrets.
+.git
+.github
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+docs
+scripts
+coverage
+apps/api/src/generated
+
+# The API image only needs the mobile app's package.json (for the workspace lockfile).
+apps/mobile/*
+!apps/mobile/package.json

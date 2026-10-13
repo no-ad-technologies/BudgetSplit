@@ -1,0 +1,39 @@
+# Local development.
+#   docker compose up -d db             -> Postgres 17 on localhost:5432 (dev + test databases)
+#   docker compose --profile full up    -> also runs the API container exactly as Render does
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: budgetsplit
+      POSTGRES_PASSWORD: budgetsplit
+      POSTGRES_DB: budgetsplit
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/db/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U budgetsplit -d budgetsplit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://budgetsplit:budgetsplit@db:5432/budgetsplit
+      PORT: "4000"
+      NODE_ENV: production
+      ALLOW_DEV_AUTH_IN_PRODUCTION: "true"
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
