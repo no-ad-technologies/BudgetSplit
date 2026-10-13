@@ -1,0 +1,180 @@
+{
+  "$comment": "Product backlog for the agile board. scripts/bootstrap-board.mjs turns each story into a GitHub issue on the project board. Keep in sync with the Milestone 2 doc.",
+  "milestones": [
+    { "key": "m2", "title": "M2 · Walking skeleton", "description": "One feature end to end through the real architecture." },
+    { "key": "mvp", "title": "MVP", "description": "Sign-in, groups, all split types, balances, settle-up, confirmations." },
+    { "key": "r2", "title": "Release 2", "description": "Reminders and monthly spending summary." },
+    { "key": "stretch", "title": "Stretch", "description": "Recurring bills and the AI fairness summary (cut first)." }
+  ],
+  "stories": [
+    {
+      "id": "US-01",
+      "title": "Sign in and keep my data across devices",
+      "persona": "josh",
+      "priority": "must",
+      "points": 3,
+      "milestone": "mvp",
+      "status": "Todo",
+      "story": "As Josh, I want to sign in with Google or my school email so that my balances follow me to any phone and nobody else can post expenses as me.",
+      "criteria": [
+        "Given a new user, when Josh signs in with Google or an email link, then an account is created with his display name.",
+        "Any API call without a valid token returns 401; a call on a group he is not in returns 403.",
+        "After signing in on a second phone, Josh sees the same groups and balances."
+      ]
+    },
+    {
+      "id": "US-02",
+      "title": "Create a group and invite roommates",
+      "persona": "maya",
+      "priority": "must",
+      "points": 5,
+      "milestone": "mvp",
+      "status": "Todo",
+      "story": "As Maya, I want to create a group and invite my roommates with a link so that the whole house shares one ledger.",
+      "criteria": [
+        "Given Maya is signed in, when she creates \"Maple St House\", then she is its first member and admin.",
+        "When a roommate opens the invite link while signed in, they join and see the same balances as Maya.",
+        "An invite link expires after 7 days, and the admin can revoke it sooner."
+      ]
+    },
+    {
+      "id": "US-03",
+      "title": "Add an expense split evenly",
+      "persona": "maya",
+      "priority": "must",
+      "points": 3,
+      "milestone": "m2",
+      "status": "Done",
+      "story": "As Maya, I want to log a shared expense in a few taps and have it split evenly so that I never have to do the math or explain it.",
+      "criteria": [
+        "Given a 4-person group, when Maya saves \"Groceries, $50.00, paid by Maya\", then each share is $12.50 and Maya's balance rises by $37.50.",
+        "Given $10.00 split 3 ways, shares are $3.34, $3.33 and $3.33: leftover cents go to members in join order, and shares always sum to the total.",
+        "The amount must be $0.01 to $10,000.00 and the description 1 to 80 characters; otherwise an inline error shows and nothing is saved.",
+        "Saving twice with the same request key (double tap or network retry) records one expense, not two.",
+        "The group screen shows the new balances right after saving, with no manual refresh."
+      ]
+    },
+    {
+      "id": "US-04",
+      "title": "Split by percentage or custom amounts",
+      "persona": "maya",
+      "priority": "must",
+      "points": 5,
+      "milestone": "mvp",
+      "status": "Todo",
+      "story": "As Maya, I want to split an expense by percentages or exact amounts so that uneven costs, like a bigger bedroom's rent, are logged correctly.",
+      "criteria": [
+        "Custom amounts must add up to the total; until they do, Save is disabled and the difference is shown.",
+        "Percentages must add up to 100%; leftover cents are assigned in join order, as in US-03.",
+        "A member can be left out of an expense with a share of $0.00."
+      ]
+    },
+    {
+      "id": "US-05",
+      "title": "See my net balance per group",
+      "persona": "josh",
+      "priority": "must",
+      "points": 3,
+      "milestone": "m2",
+      "status": "In Progress",
+      "story": "As Josh, I want one number per group that says what I owe or am owed so that I stop scrolling through five group chats.",
+      "criteria": [
+        "The group screen shows each member's net (paid minus share) as \"owes $X\" or \"is owed $X\".",
+        "The home screen shows Josh's net across all of his groups.",
+        "A group's member balances always sum to exactly $0.00.",
+        "Only expenses and confirmed settlements count; pending settlements are listed separately."
+      ]
+    },
+    {
+      "id": "US-06",
+      "title": "Get the fewest payments to settle up",
+      "persona": "maya",
+      "priority": "must",
+      "points": 8,
+      "milestone": "mvp",
+      "status": "Todo",
+      "story": "As Maya, I want the app to suggest the fewest payments that clear the group so that I am not chasing five small Venmo requests.",
+      "criteria": [
+        "For groups of up to 12 members, the plan uses the true minimum number of payments; larger groups get a plan with at most N-1 payments.",
+        "Making every suggested payment brings every member's balance to $0.00.",
+        "Each suggestion shows payer, receiver and an exact amount, and the plan updates after any expense or settlement change."
+      ]
+    },
+    {
+      "id": "US-07",
+      "title": "Confirm a settlement on both sides",
+      "persona": "maya",
+      "priority": "must",
+      "points": 5,
+      "milestone": "mvp",
+      "status": "Todo",
+      "story": "As Maya, I want a payment to count only after both of us confirm it so that the balances stay trustworthy for the whole group.",
+      "criteria": [
+        "When Josh records \"Paid Maya $42.50\", it shows as Pending for both of them and balances do not change yet.",
+        "Balances change only when Maya confirms; she can also reject it with a reason.",
+        "Every settlement keeps an audit record of who recorded it, who confirmed it, when, and how much."
+      ]
+    },
+    {
+      "id": "US-08",
+      "title": "Get reminded about unpaid balances",
+      "persona": "josh",
+      "priority": "should",
+      "points": 5,
+      "milestone": "r2",
+      "status": "Todo",
+      "story": "As Josh, I want a reminder when I have owed money for a while so that I pay back without Maya having to nag me.",
+      "criteria": [
+        "If Josh has owed money in a group for 3 days, he gets one push reminder, and at most one per group every 3 days after that.",
+        "Josh can mute reminders for a group.",
+        "Tapping the reminder opens that group's settle-up screen."
+      ]
+    },
+    {
+      "id": "US-09",
+      "title": "See my monthly shared spending",
+      "persona": "priya",
+      "priority": "should",
+      "points": 5,
+      "milestone": "r2",
+      "status": "Todo",
+      "story": "As Priya, I want to see what I spend on shared costs each month so that I can budget ahead instead of being surprised by a utility bill.",
+      "criteria": [
+        "The summary shows Priya's share per calendar month for the last 6 months, per group and in total.",
+        "The current month is broken down by category: rent, utilities, groceries and other.",
+        "Each month's total equals the exact sum of her shares for that month."
+      ]
+    },
+    {
+      "id": "US-10",
+      "title": "Auto-add recurring bills",
+      "persona": "priya",
+      "priority": "could",
+      "points": 5,
+      "milestone": "stretch",
+      "status": "Todo",
+      "story": "As Priya, I want rent and WiFi to be added automatically each month so that nobody forgets and I can plan around them.",
+      "criteria": [
+        "A template stores description, amount, payer, split and a day of the month from 1 to 28.",
+        "The scheduler posts the expense once on that day; running the job twice never creates a duplicate.",
+        "Members are notified when a recurring expense posts, and the template can be paused or edited."
+      ]
+    },
+    {
+      "id": "US-11",
+      "title": "Get a neutral AI fairness summary",
+      "persona": "maya",
+      "priority": "could",
+      "points": 8,
+      "milestone": "stretch",
+      "status": "Todo",
+      "story": "As Maya, I want a neutral written summary of contribution patterns so that the group can talk about imbalances without me being the one to bring it up.",
+      "criteria": [
+        "Any member can request a summary of the last 30 or 90 days; it appears within 10 seconds, or the app shows \"Summary unavailable\" with the plain numbers still visible.",
+        "Every number in the summary matches the statistics the server computed; the model is not allowed to introduce new figures.",
+        "The model receives aliases (\"Member A\") and totals only, never names, emails or expense descriptions.",
+        "Wording describes amounts, not motives (\"paid 18% less than an even share\", not \"is freeloading\")."
+      ]
+    }
+  ]
+}

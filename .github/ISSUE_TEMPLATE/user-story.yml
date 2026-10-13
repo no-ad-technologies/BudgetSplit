@@ -1,0 +1,42 @@
+name: User story
+description: A feature written from a persona's point of view, with acceptance criteria.
+title: "US-xx · "
+labels: ["type:story"]
+body:
+  - type: dropdown
+    id: persona
+    attributes:
+      label: Persona
+      description: Every story traces back to a persona from Deliverable 1.
+      options:
+        - Maya, the Organizer Roommate
+        - Josh, the Forgetful Friend
+        - Priya, the Budget-Conscious Planner
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      placeholder: "As Maya, I want to ... so that ..."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Given / when / then, one per line. Each must be testable.
+      placeholder: "- Given ..., when ..., then ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (MoSCoW)
+      options: [Must, Should, Could]
+    validations:
+      required: true
+  - type: input
+    id: points
+    attributes:
+      label: Story points (1, 2, 3, 5, 8, 13)
