@@ -1,0 +1,96 @@
+// BudgetSplit data model. Money is always integer cents (docs/adr/0003-integer-cents.md).
+// Every row is scoped to a group: one shared, multi-tenant database (docs/architecture.md).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MemberRole {
+  ADMIN
+  MEMBER
+}
+
+enum SplitType {
+  EVEN
+  EXACT
+  PERCENT
+}
+
+model User {
+  id          String        @id @default(uuid()) @db.Uuid
+  displayName String        @map("display_name") @db.VarChar(60)
+  email       String?       @unique
+  /// Firebase Auth UID, filled in when US-01 replaces the dev auth stub.
+  authUid     String?       @unique @map("auth_uid")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  memberships GroupMember[]
+  shares      ExpenseShare[]
+
+  @@map("users")
+}
+
+model Group {
+  id        String        @id @default(uuid()) @db.Uuid
+  name      String        @db.VarChar(60)
+  createdAt DateTime      @default(now()) @map("created_at")
+  members   GroupMember[]
+  expenses  Expense[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId         String     @map("group_id") @db.Uuid
+  userId          String     @map("user_id") @db.Uuid
+  role            MemberRole @default(MEMBER)
+  joinedAt        DateTime   @default(now()) @map("joined_at")
+  group           Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expensesPaid    Expense[]  @relation("ExpensePayer")
+  expensesCreated Expense[]  @relation("ExpenseCreator")
+
+  @@id([groupId, userId])
+  @@index([userId])
+  @@map("group_members")
+}
+
+model Expense {
+  id             String         @id @default(uuid()) @db.Uuid
+  groupId        String         @map("group_id") @db.Uuid
+  paidById       String         @map("paid_by_id") @db.Uuid
+  createdById    String         @map("created_by_id") @db.Uuid
+  description    String         @db.VarChar(80)
+  /// Always > 0 and <= 1,000,000 (enforced by a CHECK constraint in the migration).
+  amountCents    Int            @map("amount_cents")
+  splitType      SplitType      @default(EVEN) @map("split_type")
+  /// Client-supplied key that makes POST /expenses safe to retry.
+  idempotencyKey String?        @map("idempotency_key") @db.VarChar(100)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  group          Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  // The payer and creator must be members of the same group: the database enforces it.
+  payer          GroupMember    @relation("ExpensePayer", fields: [groupId, paidById], references: [groupId, userId], onDelete: Restrict)
+  creator        GroupMember    @relation("ExpenseCreator", fields: [groupId, createdById], references: [groupId, userId], onDelete: Restrict)
+  shares         ExpenseShare[]
+
+  @@unique([groupId, idempotencyKey])
+  @@index([groupId, createdAt])
+  @@map("expenses")
+}
+
+model ExpenseShare {
+  expenseId  String  @map("expense_id") @db.Uuid
+  userId     String  @map("user_id") @db.Uuid
+  /// Always >= 0 (CHECK constraint). Shares of one expense sum to its amount.
+  shareCents Int     @map("share_cents")
+  expense    Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@id([expenseId, userId])
+  @@index([userId])
+  @@map("expense_shares")
+}
