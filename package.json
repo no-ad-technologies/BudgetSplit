@@ -1,0 +1,26 @@
+{
+  "name": "budgetsplit",
+  "private": true,
+  "description": "BudgetSplit — shared expense splitter for roommates and trips (SE course project).",
+  "workspaces": [
+    "apps/api",
+    "apps/mobile",
+    "packages/shared"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "dev:api": "npm run dev -w @budgetsplit/api",
+    "dev:mobile": "npm run start -w @budgetsplit/mobile",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "npm run db:migrate -w @budgetsplit/api",
+    "db:seed": "npm run db:seed -w @budgetsplit/api"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  }
+}

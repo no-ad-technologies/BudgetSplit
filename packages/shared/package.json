@@ -1,0 +1,23 @@
+{
+  "name": "@budgetsplit/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Types and money helpers shared by the BudgetSplit API and mobile app.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vitest": "5.0.4"
+  }
+}

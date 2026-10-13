@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+
+# generated Prisma client (rebuilt by `npm run db:generate`)
+apps/api/src/generated/
+
+# env files — commit .env.example only
+.env
+.env.*
+!.env.example
+
+# test / coverage
+coverage/
+
+# editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# logs
+npm-debug.log*
+*.log
