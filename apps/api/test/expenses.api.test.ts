@@ -6,6 +6,7 @@
 import request from "supertest";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import {
+  ApiErrorCode,
   DEMO_GROUP,
   DEMO_USERS,
   DEV_USER_HEADER,
@@ -54,7 +55,7 @@ describe.skipIf(!databaseUrl)("walking skeleton: add an expense, see balances (U
     it("rejects a request with no user header (401)", async () => {
       const res = await request(app).get(`${GROUP}/balances`);
       expect(res.status).toBe(401);
-      expect(res.body.error.code).toBe("unauthenticated");
+      expect(res.body.error.code).toBe(ApiErrorCode.unauthenticated);
     });
 
     it("rejects an unknown user (401)", async () => {
@@ -65,7 +66,7 @@ describe.skipIf(!databaseUrl)("walking skeleton: add an expense, see balances (U
     it("rejects a signed-in user who is not in the group (403)", async () => {
       const res = await request(app).get(`${GROUP}/balances`).set(as(riley.id));
       expect(res.status).toBe(403);
-      expect(res.body.error.code).toBe("not_a_member");
+      expect(res.body.error.code).toBe(ApiErrorCode.notAMember);
     });
 
     it("rejects a malformed group id (400)", async () => {
@@ -135,7 +136,7 @@ describe.skipIf(!databaseUrl)("walking skeleton: add an expense, see balances (U
       .set(as(maya.id))
       .send({ paidById: maya.id, ...partial });
     expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe("validation_failed");
+    expect(res.body.error.code).toBe(ApiErrorCode.validationFailed);
     expect(await expenseCount()).toBe(before);
   });
 
@@ -156,7 +157,7 @@ describe.skipIf(!databaseUrl)("walking skeleton: add an expense, see balances (U
       .set("Content-Type", "application/json")
       .send('{"description": "oops"');
     expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe("invalid_json");
+    expect(res.body.error.code).toBe(ApiErrorCode.invalidJson);
   });
 
   describe("idempotency (trade-off T1)", () => {
@@ -221,6 +222,6 @@ describe.skipIf(!databaseUrl)("walking skeleton: add an expense, see balances (U
   it("answers unknown routes with 404 in the standard error shape", async () => {
     const res = await request(app).get("/nope");
     expect(res.status).toBe(404);
-    expect(res.body.error.code).toBe("not_found");
+    expect(res.body.error.code).toBe(ApiErrorCode.notFound);
   });
 });
