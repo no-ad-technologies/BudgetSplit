@@ -2,6 +2,7 @@ import "dotenv/config";
 import { createApp } from "./app.ts";
 import { loadConfig } from "./config.ts";
 import { createDb } from "./db.ts";
+import { logger } from "./logger.ts";
 
 const config = loadConfig();
 const db = createDb(config.databaseUrl);
@@ -12,12 +13,12 @@ const app = createApp({
 });
 
 const server = app.listen(config.port, () => {
-  console.log(JSON.stringify({ msg: "listening", port: config.port, env: config.nodeEnv, auth: config.authMode }));
+  logger.info({ port: config.port, env: config.nodeEnv, auth: config.authMode }, "listening");
 });
 
 // Render sends SIGTERM before replacing an instance; finish in-flight requests, then close the pool.
 function shutdown(signal: string) {
-  console.log(JSON.stringify({ msg: "shutting_down", signal }));
+  logger.info({ signal }, "shutting_down");
   server.close(async () => {
     await db.$disconnect();
     process.exit(0);
