@@ -62,6 +62,16 @@ export interface BalancesDto {
   balances: MemberBalanceDto[];
 }
 
+export interface GroupSummaryDto {
+  groupId: string;
+  groupName: string;
+  netCents: number;
+}
+
+export interface UserGroupsDto {
+  groups: GroupSummaryDto[];
+}
+
 export interface ExpenseShareDto {
   userId: string;
   shareCents: number;

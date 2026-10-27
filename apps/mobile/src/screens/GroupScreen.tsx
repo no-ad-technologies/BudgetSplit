@@ -20,8 +20,9 @@ import { colors } from "../theme";
  * Data fetching lives in useGroupData; the balances and the form are their own components.
  * All money math happens on the server; this screen only lays out the result.
  */
-export function GroupScreen() {
-  const { group, balances, loadError, refreshing, reload, onRefresh, setBalances } = useGroupData(GROUP_ID);
+export function GroupScreen({ groupId }: { groupId?: string } = {}) {
+  const activeGroupId = groupId ?? GROUP_ID;
+  const { group, balances, loadError, refreshing, reload, onRefresh, setBalances } = useGroupData(activeGroupId);
 
   if (!group || !balances) {
     return (
@@ -53,7 +54,7 @@ export function GroupScreen() {
         <Text style={styles.subtitle}>Signed in as {me?.displayName ?? "unknown"} (dev mode)</Text>
 
         <BalanceList balances={balances.balances} />
-        <ExpenseForm groupId={GROUP_ID} members={group.members} onExpenseSaved={setBalances} />
+        <ExpenseForm groupId={activeGroupId} members={group.members} onExpenseSaved={setBalances} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

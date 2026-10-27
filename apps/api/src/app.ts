@@ -6,6 +6,7 @@ import { requestLog } from "./http/requestLog.ts";
 import { balancesRouter } from "./modules/balances/balances.routes.ts";
 import { expensesRouter } from "./modules/expenses/expenses.routes.ts";
 import { groupsRouter } from "./modules/groups/groups.routes.ts";
+import { userGroupsRouter } from "./modules/groups/userGroups.routes.ts";
 
 export interface AppDeps {
   db: Db;
@@ -33,6 +34,8 @@ export function createApp({ db, logRequests = false, version = "dev" }: AppDeps)
       res.status(503).json({ status: "degraded", database: "unreachable", version });
     }
   });
+
+  app.use("/users/me", devAuth(db), userGroupsRouter(db));
 
   const group = express.Router({ mergeParams: true });
   group.use(groupsRouter(db), balancesRouter(db), expensesRouter(db));

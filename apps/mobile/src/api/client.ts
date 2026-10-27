@@ -7,6 +7,7 @@ import {
   type CreateExpenseRequest,
   type CreateExpenseResponse,
   type GroupDto,
+  type UserGroupsDto,
 } from "@budgetsplit/shared";
 import { API_URL, DEV_USER_ID, REQUEST_TIMEOUT_MS } from "../config";
 
@@ -68,6 +69,7 @@ export function newIdempotencyKey(): string {
 export const api = {
   getGroup: (groupId: string) => call<GroupDto>(`/groups/${groupId}`),
   getBalances: (groupId: string) => call<BalancesDto>(`/groups/${groupId}/balances`),
+  getMyGroups: () => call<UserGroupsDto>("/users/me/groups"),
   addExpense: (groupId: string, body: CreateExpenseRequest, idempotencyKey: string) =>
     call<CreateExpenseResponse>(`/groups/${groupId}/expenses`, {
       method: "POST",
