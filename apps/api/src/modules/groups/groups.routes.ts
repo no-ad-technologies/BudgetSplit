@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { GroupDto } from "@budgetsplit/shared";
+import { ApiErrorCode, type GroupDto } from "@budgetsplit/shared";
 import type { Db } from "../../db.ts";
 import { HttpError } from "../../http/errors.ts";
 
@@ -22,7 +22,7 @@ export function groupsRouter(db: Db): Router {
         },
       },
     });
-    if (!group) throw new HttpError(404, "group_not_found", "Group not found.");
+    if (!group) throw new HttpError(404, ApiErrorCode.groupNotFound, "Group not found.");
 
     const body: GroupDto = {
       id: group.id,

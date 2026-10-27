@@ -5,6 +5,16 @@ Each entry names the story it serves, so any change can be traced back (and reve
 
 ## [Unreleased]
 
+### Changed
+- Structured logging through pino (`apps/api/src/logger.ts`) replaces manual `console.log(JSON.stringify(...))`
+  in `server.ts`, `requestLog.ts` and `errors.ts`; errors and stacks serialize automatically.
+- Shared `ApiErrorCode` constants in `packages/shared` replace hardcoded error-code strings across the API,
+  the mobile client and the tests.
+- Safer type guards in `errors.ts` (`in`-operator for body-parser errors, `instanceof Error` for stack traces).
+- Split `createEvenExpense` into `findReplay` and `resolveShares` helpers so the transaction holds only the
+  writes and idempotency-critical reads.
+- Mobile `GroupScreen` decomposed into `useGroupData`, `BalanceList` and `ExpenseForm`, with a shared `theme`.
+
 ## [0.1.0] - 2026-10-13 · Milestone 2: foundation and walking skeleton
 
 ### Added

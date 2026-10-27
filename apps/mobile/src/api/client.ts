@@ -1,4 +1,5 @@
 import {
+  ApiErrorCode,
   DEV_USER_HEADER,
   IDEMPOTENCY_HEADER,
   type ApiErrorBody,
@@ -13,7 +14,7 @@ import { API_URL, DEV_USER_ID, REQUEST_TIMEOUT_MS } from "../config";
 export class ApiError extends Error {
   constructor(
     readonly status: number,
-    readonly code: string,
+    readonly code: ApiErrorCode,
     message: string,
     readonly details?: unknown,
   ) {
@@ -39,7 +40,7 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
       },
     });
   } catch {
-    throw new ApiError(0, "network_error", "Can't reach BudgetSplit. Check your connection and try again.");
+    throw new ApiError(0, ApiErrorCode.networkError, "Can't reach BudgetSplit. Check your connection and try again.");
   } finally {
     clearTimeout(timer);
   }
@@ -47,7 +48,12 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const err = (body as ApiErrorBody | null)?.error;
-    throw new ApiError(res.status, err?.code ?? "http_error", err?.message ?? `Request failed (${res.status})`, err?.details);
+    throw new ApiError(
+      res.status,
+      err?.code ?? ApiErrorCode.httpError,
+      err?.message ?? `Request failed (${res.status})`,
+      err?.details,
+    );
   }
   return body as T;
 }
