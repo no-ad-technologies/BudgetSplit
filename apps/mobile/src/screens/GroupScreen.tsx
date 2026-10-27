@@ -22,7 +22,8 @@ type FieldError = Extract<DraftResult, { ok: false }>;
  * Walking skeleton screen: see the group's balances (US-05) and add an evenly split expense (US-03).
  * All money math happens on the server; this screen only collects input and draws the result.
  */
-export function GroupScreen() {
+export function GroupScreen({ groupId }: { groupId?: string } = {}) {
+  const activeGroupId = groupId ?? GROUP_ID;
   const [group, setGroup] = useState<GroupDto | null>(null);
   const [balances, setBalances] = useState<BalancesDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -41,14 +42,14 @@ export function GroupScreen() {
 
   const load = useCallback(async () => {
     try {
-      const [g, b] = await Promise.all([api.getGroup(GROUP_ID), api.getBalances(GROUP_ID)]);
+      const [g, b] = await Promise.all([api.getGroup(activeGroupId), api.getBalances(activeGroupId)]);
       setGroup(g);
       setBalances(b);
       setLoadError(null);
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : "Couldn't load the group.");
     }
-  }, []);
+  }, [activeGroupId]);
 
   useEffect(() => {
     void load();
@@ -71,7 +72,7 @@ export function GroupScreen() {
     setFieldError(null);
     setSaving(true);
     try {
-      const response = await api.addExpense(GROUP_ID, result.request, draftKey.current);
+      const response = await api.addExpense(activeGroupId, result.request, draftKey.current);
       setBalances(response.balances);
       const each = response.expense.shares[0]?.shareCents ?? 0;
       setLastSaved(
@@ -85,7 +86,7 @@ export function GroupScreen() {
     } finally {
       setSaving(false);
     }
-  }, [description, amountText, paidById]);
+  }, [description, amountText, paidById, activeGroupId]);
 
   if (!group || !balances) {
     return (
