@@ -11,6 +11,9 @@ Each entry names the story it serves, so any change can be traced back (and reve
   in join order to members whose exact share has a fraction of a cent, so a 0% member always pays $0.00.
   The mobile form has Evenly / By % / Amounts, shows what is left to assign, and keeps Save disabled
   until the shares add up. New error code `share_not_member`.
+- **US-06 · Fewest payments to settle up.** `GET /groups/:id/settle-up` returns the exact minimum
+  number of payments for up to 12 members with a balance (dynamic program over subsets, ADR 0006) and a
+  greedy plan of at most n − 1 payments above that (`exact: false`). Settle-up card on the group screen.
 - Equivalence-partitioning table for `splitByPercent` and `splitExact`
   ([docs/testing/equivalence-partitioning.md](docs/testing/equivalence-partitioning.md)).
 - AI-generated tests for `splitByPercent`, evaluated against 9 seeded bugs with
