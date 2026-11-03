@@ -11,22 +11,24 @@ import {
 } from "react-native";
 import { BalanceList } from "../components/BalanceList";
 import { ExpenseForm } from "../components/ExpenseForm";
+import { PendingSettlementsCard } from "../components/PendingSettlementsCard";
 import { SettleUpCard } from "../components/SettleUpCard";
 import { DEV_USER_ID, GROUP_ID } from "../config";
 import { useGroupData } from "../hooks/useGroupData";
 import { colors } from "../theme";
 
 /**
- * Group screen: balances (US-05), the settle-up plan (US-06) and the add-expense form (US-03, US-04).
+ * Group screen: balances (US-05), the settle-up plan (US-06), payments waiting for confirmation (US-07)
+ * and the add-expense form (US-03, US-04).
  * Data fetching lives in useGroupData; the balances and the form are their own components.
  * All money math happens on the server; this screen only lays out the result.
  */
 export function GroupScreen({ groupId }: { groupId?: string } = {}) {
   const activeGroupId = groupId ?? GROUP_ID;
-  const { group, balances, settleUp, loadError, refreshing, reload, onRefresh, onBalancesChanged } =
+  const { group, balances, settleUp, pending, loadError, refreshing, reload, onRefresh, onBalancesChanged } =
     useGroupData(activeGroupId);
 
-  if (!group || !balances || !settleUp) {
+  if (!group || !balances || !settleUp || !pending) {
     return (
       <View style={styles.centered}>
         {loadError ? (
@@ -56,7 +58,19 @@ export function GroupScreen({ groupId }: { groupId?: string } = {}) {
         <Text style={styles.subtitle}>Signed in as {me?.displayName ?? "unknown"} (dev mode)</Text>
 
         <BalanceList balances={balances.balances} />
-        <SettleUpCard plan={settleUp} myUserId={DEV_USER_ID} />
+        <PendingSettlementsCard
+          groupId={activeGroupId}
+          pending={pending}
+          myUserId={DEV_USER_ID}
+          onBalancesChanged={onBalancesChanged}
+        />
+        <SettleUpCard
+          groupId={activeGroupId}
+          plan={settleUp}
+          pending={pending}
+          myUserId={DEV_USER_ID}
+          onBalancesChanged={onBalancesChanged}
+        />
         <ExpenseForm groupId={activeGroupId} members={group.members} onExpenseSaved={onBalancesChanged} />
       </ScrollView>
     </KeyboardAvoidingView>

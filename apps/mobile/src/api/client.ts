@@ -7,7 +7,10 @@ import {
   type CreateExpenseRequest,
   type CreateExpenseResponse,
   type GroupDto,
+  type RecordSettlementRequest,
   type SettleUpDto,
+  type SettlementListDto,
+  type SettlementResponse,
   type UserGroupsDto,
 } from "@budgetsplit/shared";
 import { API_URL, DEV_USER_ID, REQUEST_TIMEOUT_MS } from "../config";
@@ -72,6 +75,21 @@ export const api = {
   getBalances: (groupId: string) => call<BalancesDto>(`/groups/${groupId}/balances`),
   getMyGroups: () => call<UserGroupsDto>("/users/me/groups"),
   getSettleUp: (groupId: string) => call<SettleUpDto>(`/groups/${groupId}/settle-up`),
+  getPendingSettlements: (groupId: string) =>
+    call<SettlementListDto>(`/groups/${groupId}/settlements?status=PENDING`),
+  recordSettlement: (groupId: string, body: RecordSettlementRequest, idempotencyKey: string) =>
+    call<SettlementResponse>(`/groups/${groupId}/settlements`, {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { [IDEMPOTENCY_HEADER]: idempotencyKey },
+    }),
+  confirmSettlement: (groupId: string, settlementId: string) =>
+    call<SettlementResponse>(`/groups/${groupId}/settlements/${settlementId}/confirm`, { method: "POST" }),
+  rejectSettlement: (groupId: string, settlementId: string, reason: string) =>
+    call<SettlementResponse>(`/groups/${groupId}/settlements/${settlementId}/reject`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    }),
   addExpense: (groupId: string, body: CreateExpenseRequest, idempotencyKey: string) =>
     call<CreateExpenseResponse>(`/groups/${groupId}/expenses`, {
       method: "POST",
