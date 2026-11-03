@@ -11,6 +11,12 @@ export const MAX_EXPENSE_CENTS = 1_000_000;
 /** Longest expense description we accept (US-03 acceptance criteria). */
 export const DESCRIPTION_MAX_LENGTH = 80;
 
+/**
+ * 100% in basis points (US-04). Percentages travel as integers: 1% = 100, 33.33% = 3333,
+ * so percent splits use integer math end to end, like money.
+ */
+export const FULL_PERCENT_BASIS_POINTS = 10_000;
+
 function assertIntegerCents(cents: number): void {
   if (!Number.isSafeInteger(cents)) {
     throw new TypeError(`Expected integer cents, got ${cents}`);
