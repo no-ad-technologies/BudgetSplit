@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeNet, formatCents, parseDollarsToCents } from "./money";
+import { describeNet, formatBasisPoints, formatCents, parseDollarsToCents, parsePercentToBasisPoints } from "./money";
 
 describe("formatCents", () => {
   it.each([
@@ -41,5 +41,35 @@ describe("describeNet", () => {
     expect(describeNet(3750)).toBe("is owed $37.50");
     expect(describeNet(-1250)).toBe("owes $12.50");
     expect(describeNet(0)).toBe("is settled up");
+  });
+});
+
+describe("formatBasisPoints (US-04)", () => {
+  it.each([
+    [10_000, "100%"],
+    [3333, "33.33%"],
+    [2550, "25.5%"],
+    [5, "0.05%"],
+    [0, "0%"],
+    [-150, "-1.5%"],
+  ])("formats %s as %s", (bp, text) => {
+    expect(formatBasisPoints(bp)).toBe(text);
+  });
+});
+
+describe("parsePercentToBasisPoints (US-04)", () => {
+  it.each([
+    ["40", 4000],
+    ["33.33", 3333],
+    ["12.5%", 1250],
+    [" 0 ", 0],
+    ["100", 10_000],
+    ["0.01", 1],
+  ])("parses %j as %s basis points", (text, bp) => {
+    expect(parsePercentToBasisPoints(text)).toBe(bp);
+  });
+
+  it.each(["", "abc", "-5", "100.01", "101", "33.333", "1,000", ".5"])("rejects %j", (text) => {
+    expect(parsePercentToBasisPoints(text)).toBeNull();
   });
 });
