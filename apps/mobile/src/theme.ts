@@ -9,3 +9,10 @@ export const colors = {
   owed: "#1b7f4b",
   owes: "#b3261e",
 };
+
+/** Text color for a net balance: green when owed money, red when owing, gray when settled (US-05). */
+export function netColor(netCents: number): string {
+  if (netCents > 0) return colors.owed;
+  if (netCents < 0) return colors.owes;
+  return colors.quiet;
+}
