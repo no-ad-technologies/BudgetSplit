@@ -29,7 +29,7 @@
       "priority": "must",
       "points": 5,
       "milestone": "mvp",
-      "status": "Todo",
+      "status": "Done",
       "story": "As Maya, I want to create a group and invite my roommates with a link so that the whole house shares one ledger.",
       "criteria": [
         "Given Maya is signed in, when she creates \"Maple St House\", then she is its first member and admin.",
@@ -61,7 +61,7 @@
       "priority": "must",
       "points": 5,
       "milestone": "mvp",
-      "status": "Todo",
+      "status": "Done",
       "story": "As Maya, I want to split an expense by percentages or exact amounts so that uneven costs, like a bigger bedroom's rent, are logged correctly.",
       "criteria": [
         "Custom amounts must add up to the total; until they do, Save is disabled and the difference is shown.",
@@ -76,7 +76,7 @@
       "priority": "must",
       "points": 3,
       "milestone": "m2",
-      "status": "In Progress",
+      "status": "Done",
       "story": "As Josh, I want one number per group that says what I owe or am owed so that I stop scrolling through five group chats.",
       "criteria": [
         "The group screen shows each member's net (paid minus share) as \"owes $X\" or \"is owed $X\".",
@@ -92,7 +92,7 @@
       "priority": "must",
       "points": 8,
       "milestone": "mvp",
-      "status": "Todo",
+      "status": "Done",
       "story": "As Maya, I want the app to suggest the fewest payments that clear the group so that I am not chasing five small Venmo requests.",
       "criteria": [
         "For groups of up to 12 members, the plan uses the true minimum number of payments; larger groups get a plan with at most N-1 payments.",
@@ -107,7 +107,7 @@
       "priority": "must",
       "points": 5,
       "milestone": "mvp",
-      "status": "Todo",
+      "status": "Done",
       "story": "As Maya, I want a payment to count only after both of us confirm it so that the balances stay trustworthy for the whole group.",
       "criteria": [
         "When Josh records \"Paid Maya $42.50\", it shows as Pending for both of them and balances do not change yet.",

@@ -30,7 +30,17 @@ Each entry names the story it serves, so any change can be traced back (and reve
 - AI-generated tests for `splitByPercent`, evaluated against 9 seeded bugs with
   `npm run test:seeded-bugs -w @budgetsplit/api` ([docs/ai/m3-ai-generated-tests.md](docs/ai/m3-ai-generated-tests.md)).
 
+- D3 docs: [refactoring log](docs/refactoring-log.md), [AI pair-programming log](docs/ai/m3-pair-programming-log.md),
+  [D3 report](docs/m3-report.md); screenshots in `docs/images/m3/`.
+- Integration tests for `GET /users/me/groups` (it had none).
+
 ### Changed
+- CI runs the full suite on **every push to every branch** (was: `main` only) plus every PR and manual
+  re-runs; runs on `main` are never cancelled, so every main commit gets a result. Status badge in the README.
+- `userGroups.routes.ts` reuses `getGroupBalances` instead of a copied balance query (refactoring log #3);
+  `HomeScreen` uses the shared theme, `netColor` and a `useMyGroups` hook (refactoring log #4).
+- Balances count confirmed settlements: `MemberBalanceDto` gains `sentCents` and `receivedCents` (US-07).
+- `createEvenExpense` is now `createExpense`; `GET /groups/:id` goes through `groups.service.ts`.
 - Structured logging through pino (`apps/api/src/logger.ts`) replaces manual `console.log(JSON.stringify(...))`
   in `server.ts`, `requestLog.ts` and `errors.ts`; errors and stacks serialize automatically.
 - Shared `ApiErrorCode` constants in `packages/shared` replace hardcoded error-code strings across the API,
