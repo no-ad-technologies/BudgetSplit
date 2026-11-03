@@ -130,6 +130,23 @@ export interface CreateExpenseResponse {
   replayed: boolean;
 }
 
+/** One payment in a settle-up plan (US-06): who pays whom, and exactly how much. */
+export interface SuggestedPaymentDto {
+  fromUserId: string;
+  fromName: string;
+  toUserId: string;
+  toName: string;
+  amountCents: number;
+}
+
+/** GET /groups/:groupId/settle-up. Making every payment brings every balance to $0.00. */
+export interface SettleUpDto {
+  groupId: string;
+  /** True: the fewest possible payments (groups up to 12 with a balance). False: a suggested plan, at most n − 1. */
+  exact: boolean;
+  payments: SuggestedPaymentDto[];
+}
+
 export interface ApiErrorBody {
   error: {
     code: ApiErrorCode;
