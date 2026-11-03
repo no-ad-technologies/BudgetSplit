@@ -88,6 +88,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 8, alignItems: "center" },
   input: {
     flex: 1,
+    // Lets the input shrink below its intrinsic width so the button stays inside the card on narrow phones.
+    minWidth: 0,
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: 8,
