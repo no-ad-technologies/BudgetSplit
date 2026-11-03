@@ -7,11 +7,11 @@
 
 | Requirement | Evidence | Where |
 | --- | --- | --- |
-| Core features as a series of increments | 4 MVP stories (US-02, US-04, US-06, US-07) on 7 stacked branches, 26 commits, each story built shared types → API → tests → mobile → changelog | §1, `git log --graph` |
+| Core features as a series of increments | 4 MVP stories (US-02, US-04, US-06, US-07) on 7 stacked branches, 27 commits, each story built shared types → API → tests → mobile → changelog | §1, `git log --graph` |
 | Unit tests + equivalence-partitioning table | `splitByPercent`: 20 partitions (V1–V10, I1–I10) with boundaries; `splitExact`: 4. 27 tests named after the rows | §2, [docs/testing/equivalence-partitioning.md](testing/equivalence-partitioning.md) |
 | Feature / integration tests (Ch. 9) | 6 files, 77 tests, through the real Express app and a real PostgreSQL test database, one file per user flow | §3 |
 | Refactoring log, ≥ 2 examples (Ch. 8) | 4 entries with before/after code: long method, component doing too much, duplicated code + deep nesting, duplicated code | §4, [docs/refactoring-log.md](refactoring-log.md) |
-| CI runs the full suite on every push (Ch. 10) | Trigger changed from "push to `main`" to every push on every branch + PRs + manual; badge in README | §5 |
+| CI runs the full suite on every push (Ch. 10) | Trigger changed from "push to `main`" to every push on every branch + PRs + manual; all 14 runs green after pushing (7 push, 7 PR); badge in README | §5 |
 | AI as pair programmer | Where it sped us up; 8 bugs or bad suggestions caught | §6, [docs/ai/m3-pair-programming-log.md](ai/m3-pair-programming-log.md) |
 | AI-generated tests vs a seeded bug | Primary seeded bug **missed** by the AI tests, caught by ours; 9-bug sample: AI 7/9, ours 9/9 | §7, [docs/ai/m3-ai-generated-tests.md](ai/m3-ai-generated-tests.md) |
 
@@ -30,7 +30,10 @@ Conventional Commits ending in the story id). The suite was green at the end of 
 | 4 | `feature/US-06-settle-up` | 4 | Exact planner → API → mobile card → changelog |
 | 5 | `feature/US-07-confirm-settlements` | 4 | Settlements table + balance formula → record/confirm/reject API → mobile → changelog |
 | 6 | `feature/US-02-groups-invites` | 5 | Invites table → create/invite/join/revoke API → mobile → changelog → UI fixes from screenshots |
-| 7 | `docs/m3-report` | 1 | This report, refactoring log, AI logs, screenshots, README and architecture updates |
+| 7 | `docs/m3-report` | 2 | This report, refactoring log, AI logs, screenshots, README and architecture updates; CI evidence |
+
+Each branch has its own pull request, #15 to #21, in the order above. Each PR targets the branch before it, so
+its diff shows only that increment.
 
 ### Acceptance criteria and how each is checked
 
@@ -217,9 +220,15 @@ all four entries is in [docs/refactoring-log.md](refactoring-log.md).
   Metro; the Docker job builds the production image.
 - **Never cancelled on `main`:** on Oct 16 two quick merges left `main` with a cancelled run. Now every
   `main` commit gets its own green or red result.
-- **Visibly green:** CI badge at the top of the README, plus the Actions tab. Every run on `main` and on
-  PRs so far has passed (the cancelled one aside). These D3 branches haven't been pushed yet. Locally,
-  the same commands (`npm run typecheck`, `npm test`, `expo export`) are green: 222 of 222 tests.
+- **Visibly green:** CI badge at the top of the README, plus the Actions tab.
+
+**Evidence, Nov 3:** pushing the 7 D3 branches started 7 `push` runs, one per branch, before any PR existed. That
+is the new trigger working. Opening PRs #15–#21 added 7 `pull_request` runs. **All 14 runs passed**, every one with
+all three jobs green, including the Docker image build
+([final branch's run](https://github.com/no-ad-technologies/BudgetSplit/actions/runs/41689331049): API job 57 s,
+client job 47 s, Docker job 139 s).
+
+![GitHub Actions: every D3 run green](images/m3/10-ci-actions.png)
 
 ## 6 · AI component part 1: AI as pair programmer
 
@@ -295,5 +304,3 @@ and left the AI file unchanged, since it's what's being evaluated.
   but the app doesn't open them automatically yet: roommates paste the link or code into "Join a group".
 - **Mobile screens** have their logic unit-tested and were checked by rendering them at phone width; there
   are no component-rendering tests.
-- **CI evidence:** these branches haven't been pushed yet, so the green Actions runs for them are still
-  to come; add a screenshot of the Actions tab here once they've run.
