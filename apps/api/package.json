@@ -16,7 +16,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset --force",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:seeded-bugs": "node scripts/seeded-bugs.mjs"
   },
   "dependencies": {
     "@budgetsplit/shared": "0.1.0",

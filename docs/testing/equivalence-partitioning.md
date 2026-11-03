@@ -54,11 +54,18 @@ Boundary values are tested on both sides wherever a class has an edge.
 | I3 | Amount not an integer | ✗ | 12.5, NaN, ∞ | `RangeError` |
 | I4 | No members | ✗ | `[]` | `RangeError` |
 | I5 | Duplicate member | ✗ | maya twice | `RangeError` |
-| I6 | Negative percentage (total still 100%) | ✗ | −1 / 10,001 bp | `RangeError` |
-| I7 | Percentage over 100% | ✗ | 10,001 bp | `RangeError` |
+| I6 | Negative percentage (total still 100%, nobody over 100%) | ✗ | −1 / 5000 / 5001 bp | `RangeError` naming −1 |
+| I7 | Percentage over 100% | ✗ | 10,001 bp | `RangeError` naming 10001 (see note) |
 | I8 | Fractional basis point | ✗ | 3333.5 / 3333.5 / 3333 | `RangeError` |
 | I9 | Total just under 100% | ✗ | 5000 + 4999 = 9,999 | `RangeError` |
 | I10 | Total just over 100% | ✗ | 5000 + 5001 = 10,001 | `RangeError` |
+
+**One invalid class per test case.** I6 first used −1 / 10,001 bp. That input also breaks I7, so the
+"over 100%" check threw and the test passed even with the "negative" check deleted. The seeded-bug run
+caught this (bug S8 in [docs/ai/m3-ai-generated-tests.md](../ai/m3-ai-generated-tests.md)); the
+AI-generated tests made the same mistake. I7 cannot be isolated at all: one member over 10,000 forces
+either a negative member (I6) or a total over 10,000 (I10). Its check is defense in depth that produces
+the clearer message, so its test asserts the message rather than just "throws".
 
 V6, V7 and V8 are the partitions that matter most for correctness. They sit on the output side (who gets
 the leftover cent), not the input side, so a test plan that only partitions the inputs misses them.

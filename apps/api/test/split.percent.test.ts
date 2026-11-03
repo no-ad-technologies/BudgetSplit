@@ -111,12 +111,17 @@ describe("splitByPercent: invalid partitions", () => {
     ).toThrow(RangeError);
   });
 
-  it("I6 rejects a negative percentage (-0.01%), even when the total is 100%", () => {
-    expect(() => splitByPercent(1000, pct(-1, 10_001))).toThrow(RangeError);
+  it("I6 rejects a negative percentage (-0.01%) while every other rule holds", () => {
+    // -0.01% + 50% + 50.01% = 100%, and nobody is over 100%: only the I6 rule is broken.
+    // (The first version used -1 / 10,001, which also broke I7, so the I7 check hid a missing I6
+    // check. The seeded-bug run exposed it: docs/ai/m3-ai-generated-tests.md, bug S8.)
+    expect(() => splitByPercent(1000, pct(-1, 5000, 5001))).toThrow(/must be 0 to 10,000 basis points, got -1/);
   });
 
   it("I7 rejects a percentage over 100% (100.01%)", () => {
-    expect(() => splitByPercent(1000, pct(10_001))).toThrow(RangeError);
+    // Can't be isolated: a member over 10,000 forces a negative member (I6) or a total over 10,000 (I10).
+    // The upper-bound check is defense in depth that gives the clearer error message, so we assert the message.
+    expect(() => splitByPercent(1000, pct(10_001))).toThrow(/must be 0 to 10,000 basis points, got 10001/);
   });
 
   it("I8 rejects a fraction of a basis point (33.335%)", () => {
