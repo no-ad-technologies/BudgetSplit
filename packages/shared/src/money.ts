@@ -17,6 +17,12 @@ export const DESCRIPTION_MAX_LENGTH = 80;
  */
 export const FULL_PERCENT_BASIS_POINTS = 10_000;
 
+/** Largest single settlement payment we accept: $100,000.00 (US-07), so any realistic debt clears in one payment. */
+export const MAX_SETTLEMENT_CENTS = 10_000_000;
+
+/** Longest reason a receiver can give when rejecting a settlement (US-07). */
+export const REJECT_REASON_MAX_LENGTH = 140;
+
 /** Most members a group can have (US-02). Keeps every split and settle-up plan small and fast. */
 export const MAX_GROUP_MEMBERS = 50;
 
