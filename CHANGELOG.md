@@ -14,6 +14,12 @@ Each entry names the story it serves, so any change can be traced back (and reve
 - **US-06 · Fewest payments to settle up.** `GET /groups/:id/settle-up` returns the exact minimum
   number of payments for up to 12 members with a balance (dynamic program over subsets, ADR 0006) and a
   greedy plan of at most n − 1 payments above that (`exact: false`). Settle-up card on the group screen.
+- **US-07 · Confirm a settlement on both sides.** New `settlements` table (migration
+  `20261103172629_settlements`) with CHECK constraints for the audit trail. Payer records
+  (`POST /groups/:id/settlements`), receiver confirms or rejects with a reason
+  (`.../:settlementId/confirm`, `.../reject`); only confirmed settlements change balances
+  (`net = paid − share + sent − received`). A double confirm or a race returns 409 instead of counting twice.
+  Group screen: "Record payment" and a "Waiting for confirmation" card.
 - Equivalence-partitioning table for `splitByPercent` and `splitExact`
   ([docs/testing/equivalence-partitioning.md](docs/testing/equivalence-partitioning.md)).
 - AI-generated tests for `splitByPercent`, evaluated against 9 seeded bugs with
