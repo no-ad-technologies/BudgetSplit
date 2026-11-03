@@ -1,6 +1,6 @@
 import { DEMO_GROUP, DEMO_MEMBER_ORDER, DEMO_USERS } from "@budgetsplit/shared";
 import type { Db } from "../db.ts";
-import { createEvenExpense } from "../modules/expenses/expenses.service.ts";
+import { createExpense } from "../modules/expenses/expenses.service.ts";
 
 /**
  * Creates the demo group "Maple St House" (Maya, Josh, Priya, Sam) plus Riley, who is not a member.
@@ -42,10 +42,10 @@ export async function seedDemo(db: Db): Promise<void> {
     { key: "seed-groceries-0001", description: "Groceries", amountCents: 4510, paidBy: DEMO_USERS.josh.id },
   ];
   for (const e of sampleExpenses) {
-    await createEvenExpense(db, {
+    await createExpense(db, {
       groupId: DEMO_GROUP.id,
       actorId: e.paidBy,
-      input: { description: e.description, amountCents: e.amountCents, paidById: e.paidBy },
+      input: { description: e.description, amountCents: e.amountCents, paidById: e.paidBy, split: { type: "EVEN" } },
       idempotencyKey: e.key,
     });
   }

@@ -10,7 +10,7 @@ import { ApiErrorCode, DEMO_GROUP, DEMO_USERS, DEV_USER_HEADER, type UserGroupsD
 import { createApp } from "../src/app.ts";
 import { createDb } from "../src/db.ts";
 import { resetTestDatabase, seedDemo } from "../src/dev/seed.ts";
-import { createEvenExpense } from "../src/modules/expenses/expenses.service.ts";
+import { createExpense } from "../src/modules/expenses/expenses.service.ts";
 
 const databaseUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
 const { maya, josh, riley } = DEMO_USERS;
@@ -32,10 +32,10 @@ describe.skipIf(!databaseUrl)("GET /users/me/groups (US-05 home screen)", () => 
         { groupId: TRIP.id, userId: maya.id, joinedAt: new Date(Date.UTC(2026, 9, 2)) },
       ],
     });
-    await createEvenExpense(db, {
+    await createExpense(db, {
       groupId: TRIP.id,
       actorId: riley.id,
-      input: { description: "Gas", amountCents: 3001, paidById: riley.id },
+      input: { description: "Gas", amountCents: 3001, paidById: riley.id, split: { type: "EVEN" } },
     });
   });
 
