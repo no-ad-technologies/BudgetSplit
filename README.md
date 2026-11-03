@@ -1,5 +1,7 @@
 # BudgetSplit
 
+[![CI](https://github.com/no-ad-technologies/BudgetSplit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/no-ad-technologies/BudgetSplit/actions/workflows/ci.yml)
+
 Shared-expense splitter for roommates and trips: log an expense, split it, and always know who owes whom.
 Software engineering course project by **Rick Daniel, Samuel Mendoza and James Hays**.
 
@@ -80,6 +82,6 @@ Errors always look like `{ "error": { "code", "message", "details?" } }`.
 
 - **Branching:** GitHub Flow — short-lived `feature/US-xx-…` branches, PR + 1 review + green CI, squash merge. See [docs/branching.md](docs/branching.md).
 - **Board:** GitHub Project "BudgetSplit board", created from [docs/board/backlog.json](docs/board/backlog.json) with `node scripts/bootstrap-board.mjs`.
-- **CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml) — API (typecheck, migrate, test, build, audit), shared + mobile (typecheck, test, Metro bundle), Docker image build.
+- **CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on **every push to every branch** and on every PR — API (typecheck, migrate, test, build, audit), shared + mobile (typecheck, test, Metro bundle), Docker image build.
 - **Deploy:** Render Blueprint in [render.yaml](render.yaml); `main` deploys only after CI passes.
 - **Decisions:** [docs/adr/](docs/adr/) and [CHANGELOG.md](CHANGELOG.md). Architecture overview: [docs/architecture.md](docs/architecture.md).

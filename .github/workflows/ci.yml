@@ -1,16 +1,21 @@
-# CI skeleton (Ch. 10). Runs on every pull request and every push to main.
+# CI (Ch. 10). Runs the full test suite (API unit + integration, shared, mobile) on every push to
+# any branch, and on every pull request (which tests the merge result with main).
 # All three jobs must pass before a PR can merge, and Render deploys main only after they pass
 # (render.yaml: autoDeployTrigger: checksPass).
 name: CI
 
 on:
-  pull_request:
+  # Every push, on every branch: a feature branch is tested before anyone opens a PR (D3 requirement).
   push:
-    branches: [main]
+  pull_request:
+  # Lets anyone re-run the suite from the Actions tab without pushing a commit.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded runs on feature branches, but let every commit on main finish, so each one
+  # gets its own green (or red) result. (Two quick merges on Oct 16 left main with a cancelled run.)
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
