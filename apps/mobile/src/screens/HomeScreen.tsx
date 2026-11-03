@@ -1,9 +1,13 @@
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { describeNet } from "@budgetsplit/shared";
+import { GroupActions } from "../components/GroupActions";
 import { useMyGroups } from "../hooks/useMyGroups";
 import { colors, netColor } from "../theme";
 
-/** Home screen (US-05): every group the user is in, with their net in each. Data comes from useMyGroups. */
+/**
+ * Home screen: every group the user is in, with their net in each (US-05), plus starting or joining a
+ * group (US-02). Data comes from useMyGroups.
+ */
 export function HomeScreen({ onOpenGroup }: { onOpenGroup?: (groupId: string) => void } = {}) {
   const { groups, loadError, refreshing, reload, onRefresh } = useMyGroups();
 
@@ -35,7 +39,7 @@ export function HomeScreen({ onOpenGroup }: { onOpenGroup?: (groupId: string) =>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Groups</Text>
         {groups.length === 0 ? (
-          <Text style={styles.hint}>You are not in any groups yet.</Text>
+          <Text style={styles.hint}>You are not in any groups yet. Start one or join with an invite below.</Text>
         ) : (
           groups.map((g) => (
             <Pressable
@@ -50,6 +54,13 @@ export function HomeScreen({ onOpenGroup }: { onOpenGroup?: (groupId: string) =>
           ))
         )}
       </View>
+
+      <GroupActions
+        onGroupReady={(groupId) => {
+          void reload();
+          onOpenGroup?.(groupId);
+        }}
+      />
     </ScrollView>
   );
 }

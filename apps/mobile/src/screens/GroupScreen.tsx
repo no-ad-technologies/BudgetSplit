@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { BalanceList } from "../components/BalanceList";
 import { ExpenseForm } from "../components/ExpenseForm";
+import { InviteCard } from "../components/InviteCard";
 import { PendingSettlementsCard } from "../components/PendingSettlementsCard";
 import { SettleUpCard } from "../components/SettleUpCard";
 import { DEV_USER_ID, GROUP_ID } from "../config";
@@ -19,7 +20,7 @@ import { colors } from "../theme";
 
 /**
  * Group screen: balances (US-05), the settle-up plan (US-06), payments waiting for confirmation (US-07)
- * and the add-expense form (US-03, US-04).
+ * the add-expense form (US-03, US-04) and, for admins, the invite card (US-02).
  * Data fetching lives in useGroupData; the balances and the form are their own components.
  * All money math happens on the server; this screen only lays out the result.
  */
@@ -72,6 +73,7 @@ export function GroupScreen({ groupId }: { groupId?: string } = {}) {
           onBalancesChanged={onBalancesChanged}
         />
         <ExpenseForm groupId={activeGroupId} members={group.members} onExpenseSaved={onBalancesChanged} />
+        {me?.role === "ADMIN" && <InviteCard groupId={activeGroupId} groupName={group.name} />}
       </ScrollView>
     </KeyboardAvoidingView>
   );
