@@ -11,20 +11,22 @@ import {
 } from "react-native";
 import { BalanceList } from "../components/BalanceList";
 import { ExpenseForm } from "../components/ExpenseForm";
+import { SettleUpCard } from "../components/SettleUpCard";
 import { DEV_USER_ID, GROUP_ID } from "../config";
 import { useGroupData } from "../hooks/useGroupData";
 import { colors } from "../theme";
 
 /**
- * Walking skeleton screen: see the group's balances (US-05) and add an evenly split expense (US-03).
+ * Group screen: balances (US-05), the settle-up plan (US-06) and the add-expense form (US-03, US-04).
  * Data fetching lives in useGroupData; the balances and the form are their own components.
  * All money math happens on the server; this screen only lays out the result.
  */
 export function GroupScreen({ groupId }: { groupId?: string } = {}) {
   const activeGroupId = groupId ?? GROUP_ID;
-  const { group, balances, loadError, refreshing, reload, onRefresh, setBalances } = useGroupData(activeGroupId);
+  const { group, balances, settleUp, loadError, refreshing, reload, onRefresh, onBalancesChanged } =
+    useGroupData(activeGroupId);
 
-  if (!group || !balances) {
+  if (!group || !balances || !settleUp) {
     return (
       <View style={styles.centered}>
         {loadError ? (
@@ -54,7 +56,8 @@ export function GroupScreen({ groupId }: { groupId?: string } = {}) {
         <Text style={styles.subtitle}>Signed in as {me?.displayName ?? "unknown"} (dev mode)</Text>
 
         <BalanceList balances={balances.balances} />
-        <ExpenseForm groupId={activeGroupId} members={group.members} onExpenseSaved={setBalances} />
+        <SettleUpCard plan={settleUp} myUserId={DEV_USER_ID} />
+        <ExpenseForm groupId={activeGroupId} members={group.members} onExpenseSaved={onBalancesChanged} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
