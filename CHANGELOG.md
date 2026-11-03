@@ -6,6 +6,11 @@ Each entry names the story it serves, so any change can be traced back (and reve
 ## [Unreleased]
 
 ### Added
+- **US-02 · Create a group and invite roommates.** `POST /groups` (creator becomes admin); admins create,
+  list and revoke 7-day invite links (`/groups/:id/invites`), stored only as SHA-256 hashes (migration
+  `20261103173129_group_invites`); `POST /invites/:token/accept` joins. Joins lock the group row so
+  concurrent joins can't double-insert or pass the 50-member cap. Home screen can start or join a group;
+  admins get an invite card with the Share sheet.
 - **US-04 · Split by percentage or custom amounts.** `POST /groups/:id/expenses` takes an optional
   `split` (`EVEN` | `PERCENT` | `EXACT`); percentages travel as integer basis points. Leftover cents go
   in join order to members whose exact share has a fraction of a cent, so a 0% member always pays $0.00.
