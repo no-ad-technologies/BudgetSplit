@@ -5,6 +5,17 @@ Each entry names the story it serves, so any change can be traced back (and reve
 
 ## [Unreleased]
 
+### Added
+- **US-04 · Split by percentage or custom amounts.** `POST /groups/:id/expenses` takes an optional
+  `split` (`EVEN` | `PERCENT` | `EXACT`); percentages travel as integer basis points. Leftover cents go
+  in join order to members whose exact share has a fraction of a cent, so a 0% member always pays $0.00.
+  The mobile form has Evenly / By % / Amounts, shows what is left to assign, and keeps Save disabled
+  until the shares add up. New error code `share_not_member`.
+- Equivalence-partitioning table for `splitByPercent` and `splitExact`
+  ([docs/testing/equivalence-partitioning.md](docs/testing/equivalence-partitioning.md)).
+- AI-generated tests for `splitByPercent`, evaluated against 9 seeded bugs with
+  `npm run test:seeded-bugs -w @budgetsplit/api` ([docs/ai/m3-ai-generated-tests.md](docs/ai/m3-ai-generated-tests.md)).
+
 ### Changed
 - Structured logging through pino (`apps/api/src/logger.ts`) replaces manual `console.log(JSON.stringify(...))`
   in `server.ts`, `requestLog.ts` and `errors.ts`; errors and stacks serialize automatically.

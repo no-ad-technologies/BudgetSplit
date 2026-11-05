@@ -3,9 +3,9 @@ import { IDEMPOTENCY_HEADER, type CreateExpenseResponse, type ExpenseListDto } f
 import type { Db } from "../../db.ts";
 import { getGroupBalances } from "../balances/balances.service.ts";
 import { CreateExpenseBody, IdempotencyKey, ListExpensesQuery } from "./expenses.schema.ts";
-import { createEvenExpense, listExpenses } from "./expenses.service.ts";
+import { createExpense, listExpenses } from "./expenses.service.ts";
 
-/** /groups/:groupId/expenses — US-03. Mounted behind devAuth + requireGroupMember. */
+/** /groups/:groupId/expenses — US-03 (even) and US-04 (percent, custom). Mounted behind devAuth + requireGroupMember. */
 export function expensesRouter(db: Db): Router {
   const router = Router({ mergeParams: true });
 
@@ -20,7 +20,7 @@ export function expensesRouter(db: Db): Router {
     const idempotencyKey = IdempotencyKey.parse(req.header(IDEMPOTENCY_HEADER));
     const groupId = res.locals.groupId;
 
-    const { expense, replayed } = await createEvenExpense(db, {
+    const { expense, replayed } = await createExpense(db, {
       groupId,
       actorId: res.locals.user.id,
       input,

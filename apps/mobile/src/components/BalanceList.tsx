@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { describeNet, type MemberBalanceDto } from "@budgetsplit/shared";
-import { colors } from "../theme";
+import { colors, netColor } from "../theme";
 
 /** Read-only balances card (US-05): one row per member, colored by whether they owe or are owed. */
 export function BalanceList({ balances }: { balances: readonly MemberBalanceDto[] }) {
@@ -10,9 +10,7 @@ export function BalanceList({ balances }: { balances: readonly MemberBalanceDto[
       {balances.map((b) => (
         <View key={b.userId} style={styles.balanceRow}>
           <Text style={styles.memberName}>{b.displayName}</Text>
-          <Text style={[styles.net, b.netCents > 0 ? styles.owed : b.netCents < 0 ? styles.owes : styles.even]}>
-            {describeNet(b.netCents)}
-          </Text>
+          <Text style={[styles.net, { color: netColor(b.netCents) }]}>{describeNet(b.netCents)}</Text>
         </View>
       ))}
     </View>
@@ -25,7 +23,4 @@ const styles = StyleSheet.create({
   balanceRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 6 },
   memberName: { fontSize: 16, color: colors.ink },
   net: { fontSize: 16, fontWeight: "600" },
-  owed: { color: colors.owed },
-  owes: { color: colors.owes },
-  even: { color: colors.quiet },
 });

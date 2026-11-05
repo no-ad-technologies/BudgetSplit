@@ -11,6 +11,15 @@ export const MAX_EXPENSE_CENTS = 1_000_000;
 /** Longest expense description we accept (US-03 acceptance criteria). */
 export const DESCRIPTION_MAX_LENGTH = 80;
 
+/**
+ * 100% in basis points (US-04). Percentages travel as integers: 1% = 100, 33.33% = 3333,
+ * so percent splits use integer math end to end, like money.
+ */
+export const FULL_PERCENT_BASIS_POINTS = 10_000;
+
+/** Most members a group can have (US-02). Keeps every split and settle-up plan small and fast. */
+export const MAX_GROUP_MEMBERS = 50;
+
 function assertIntegerCents(cents: number): void {
   if (!Number.isSafeInteger(cents)) {
     throw new TypeError(`Expected integer cents, got ${cents}`);
@@ -54,4 +63,29 @@ export function describeNet(netCents: number): string {
   if (netCents > 0) return `is owed ${formatCents(netCents)}`;
   if (netCents < 0) return `owes ${formatCents(-netCents)}`;
   return "is settled up";
+}
+
+/** Formats basis points as a percentage: 10000 -> "100%", 3333 -> "33.33%", 2550 -> "25.5%", 0 -> "0%". */
+export function formatBasisPoints(basisPoints: number): string {
+  assertIntegerCents(basisPoints);
+  const sign = basisPoints < 0 ? "-" : "";
+  const abs = Math.abs(basisPoints);
+  const whole = Math.floor(abs / 100);
+  const rest = abs % 100;
+  if (rest === 0) return `${sign}${whole}%`;
+  return `${sign}${whole}.${String(rest).padStart(2, "0").replace(/0$/, "")}%`;
+}
+
+const PERCENT_INPUT = /^(\d{1,3})(?:\.(\d{1,2}))?\s*%?$/;
+
+/**
+ * Parses what a person types into a percentage field into basis points (US-04):
+ * "40" -> 4000, "33.33" -> 3333, "12.5%" -> 1250. Returns null for anything else, including
+ * values over 100%, negatives and more than two decimals. String math only, like parseDollarsToCents.
+ */
+export function parsePercentToBasisPoints(input: string): number | null {
+  const match = PERCENT_INPUT.exec(input.trim());
+  if (!match) return null;
+  const basisPoints = Number(match[1]) * 100 + Number((match[2] ?? "").padEnd(2, "0"));
+  return basisPoints <= FULL_PERCENT_BASIS_POINTS ? basisPoints : null;
 }

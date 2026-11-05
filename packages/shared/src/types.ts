@@ -24,6 +24,7 @@ export const ApiErrorCode = {
   invalidGroupId: "invalid_group_id",
   groupNotFound: "group_not_found",
   payerNotMember: "payer_not_member",
+  shareNotMember: "share_not_member",
   internalError: "internal_error",
   networkError: "network_error",
   httpError: "http_error",
@@ -93,10 +94,33 @@ export interface ExpenseListDto {
   expenses: ExpenseDto[];
 }
 
+/** One member's percentage in a PERCENT split, in basis points (1% = 100, 100% = 10,000). */
+export interface PercentShareRequest {
+  userId: string;
+  basisPoints: number;
+}
+
+/** One member's custom amount in an EXACT split, in cents. */
+export interface ExactShareRequest {
+  userId: string;
+  shareCents: number;
+}
+
+/**
+ * How an expense is split (US-03, US-04). Members left out of `shares` get $0.00.
+ * PERCENT shares must total 10,000 basis points; EXACT shares must total the expense amount.
+ */
+export type SplitRequest =
+  | { type: "EVEN" }
+  | { type: "PERCENT"; shares: PercentShareRequest[] }
+  | { type: "EXACT"; shares: ExactShareRequest[] };
+
 export interface CreateExpenseRequest {
   description: string;
   amountCents: number;
   paidById: string;
+  /** Defaults to an even split across all members, so walking-skeleton clients keep working. */
+  split?: SplitRequest;
 }
 
 export interface CreateExpenseResponse {

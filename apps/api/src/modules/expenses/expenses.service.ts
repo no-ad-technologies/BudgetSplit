@@ -3,7 +3,7 @@ import type { Db } from "../../db.ts";
 import { Prisma } from "../../generated/prisma/client.ts";
 import { HttpError } from "../../http/errors.ts";
 import type { CreateExpenseInput } from "./expenses.schema.ts";
-import { splitEven, type Share } from "./split.ts";
+import { splitByPercent, splitEven, splitExact, type Share } from "./split.ts";
 
 const withShares = { shares: { orderBy: { userId: "asc" } } } as const;
 type ExpenseWithShares = Prisma.ExpenseGetPayload<{ include: typeof withShares }>;
@@ -49,32 +49,56 @@ async function findReplay(db: Tx, groupId: string, idempotencyKey: string): Prom
   return existing ? toExpenseDto(existing) : null;
 }
 
-/** Loads member ids in join order and checks the payer belongs to the group. */
+/**
+ * Turns the requested split into one share per group member, in join order (US-03, US-04).
+ * Members the request leaves out get a $0.00 share, so every expense records every member.
+ * Validation already checked the shape and totals; this checks membership against the database.
+ */
 async function resolveShares(tx: Tx, groupId: string, input: CreateExpenseInput): Promise<Share[]> {
   const members = await tx.groupMember.findMany({
     where: { groupId },
     orderBy: [{ joinedAt: "asc" }, { userId: "asc" }],
     select: { userId: true },
   });
-  if (!members.some((m) => m.userId === input.paidById)) {
+  const memberIds = members.map((m) => m.userId);
+  if (!memberIds.includes(input.paidById)) {
     throw new HttpError(422, ApiErrorCode.payerNotMember, "The payer must be a member of this group.");
   }
-  return splitEven(
+
+  const { split } = input;
+  if (split.type === "EVEN") return splitEven(input.amountCents, memberIds);
+
+  const outsiders = split.shares.map((s) => s.userId).filter((id) => !memberIds.includes(id));
+  if (outsiders.length > 0) {
+    throw new HttpError(422, ApiErrorCode.shareNotMember, "Every share must belong to a member of this group.", {
+      userIds: outsiders,
+    });
+  }
+
+  if (split.type === "PERCENT") {
+    const byUser = new Map(split.shares.map((s) => [s.userId, s.basisPoints]));
+    return splitByPercent(
+      input.amountCents,
+      memberIds.map((userId) => ({ userId, basisPoints: byUser.get(userId) ?? 0 })),
+    );
+  }
+  const byUser = new Map(split.shares.map((s) => [s.userId, s.shareCents]));
+  return splitExact(
     input.amountCents,
-    members.map((m) => m.userId),
+    memberIds.map((userId) => ({ userId, shareCents: byUser.get(userId) ?? 0 })),
   );
 }
 
 /**
- * Records an evenly split expense (US-03) in one transaction: the expense row and every share
- * row commit together or not at all.
+ * Records an expense split evenly, by percentage or by custom amounts (US-03, US-04) in one
+ * transaction: the expense row and every share row commit together or not at all.
  *
  * Business rules live in the helpers above; the transaction body only performs the reads it needs
  * and the writes. Retries are safe: if the same Idempotency-Key was already used in this group, the
  * original expense is returned with replayed=true and nothing new is written. Two requests racing
  * with the same key are caught by the unique index on (group_id, idempotency_key).
  */
-export async function createEvenExpense(db: Db, cmd: CreateExpenseCommand): Promise<CreateExpenseResult> {
+export async function createExpense(db: Db, cmd: CreateExpenseCommand): Promise<CreateExpenseResult> {
   const { groupId, actorId, input, idempotencyKey } = cmd;
 
   try {
@@ -93,7 +117,7 @@ export async function createEvenExpense(db: Db, cmd: CreateExpenseCommand): Prom
           createdById: actorId,
           description: input.description,
           amountCents: input.amountCents,
-          splitType: "EVEN",
+          splitType: input.split.type,
           idempotencyKey: idempotencyKey ?? null,
           shares: { create: shares },
         },
