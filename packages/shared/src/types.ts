@@ -25,6 +25,12 @@ export const ApiErrorCode = {
   groupNotFound: "group_not_found",
   payerNotMember: "payer_not_member",
   shareNotMember: "share_not_member",
+  payeeNotMember: "payee_not_member",
+  cannotPaySelf: "cannot_pay_self",
+  invalidSettlementId: "invalid_settlement_id",
+  settlementNotFound: "settlement_not_found",
+  notSettlementReceiver: "not_settlement_receiver",
+  settlementNotPending: "settlement_not_pending",
   internalError: "internal_error",
   networkError: "network_error",
   httpError: "http_error",
@@ -54,7 +60,11 @@ export interface MemberBalanceDto {
   paidCents: number;
   /** Total of this member's shares, in cents. */
   shareCents: number;
-  /** paidCents - shareCents. Positive = is owed money, negative = owes money. */
+  /** Confirmed settlements this member paid to others (US-07). Pending and rejected ones don't count. */
+  sentCents: number;
+  /** Confirmed settlements this member received from others (US-07). */
+  receivedCents: number;
+  /** paidCents − shareCents + sentCents − receivedCents. Positive = is owed money, negative = owes money. */
   netCents: number;
 }
 
@@ -128,6 +138,66 @@ export interface CreateExpenseResponse {
   balances: BalancesDto;
   /** True when the Idempotency-Key matched an earlier request and nothing new was saved. */
   replayed: boolean;
+}
+
+/** One payment in a settle-up plan (US-06): who pays whom, and exactly how much. */
+export interface SuggestedPaymentDto {
+  fromUserId: string;
+  fromName: string;
+  toUserId: string;
+  toName: string;
+  amountCents: number;
+}
+
+/** GET /groups/:groupId/settle-up. Making every payment brings every balance to $0.00. */
+export interface SettleUpDto {
+  groupId: string;
+  /** True: the fewest possible payments (groups up to 12 with a balance). False: a suggested plan, at most n − 1. */
+  exact: boolean;
+  payments: SuggestedPaymentDto[];
+}
+
+export type SettlementStatus = "PENDING" | "CONFIRMED" | "REJECTED";
+
+/** A payment between two members (US-07), with its full audit trail. */
+export interface SettlementDto {
+  id: string;
+  groupId: string;
+  fromUserId: string;
+  fromName: string;
+  toUserId: string;
+  toName: string;
+  amountCents: number;
+  status: SettlementStatus;
+  recordedById: string;
+  createdAt: string;
+  /** Who confirmed or rejected it (always the receiver) and when; null while pending. */
+  respondedById: string | null;
+  respondedAt: string | null;
+  rejectReason: string | null;
+}
+
+/** POST /groups/:groupId/settlements. The signed-in member is the payer. */
+export interface RecordSettlementRequest {
+  toUserId: string;
+  amountCents: number;
+}
+
+/** POST /groups/:groupId/settlements/:settlementId/reject. */
+export interface RejectSettlementRequest {
+  reason: string;
+}
+
+export interface SettlementListDto {
+  settlements: SettlementDto[];
+}
+
+/** Every settlement write returns the settlement and the group's balances after it. */
+export interface SettlementResponse {
+  settlement: SettlementDto;
+  balances: BalancesDto;
+  /** True when the Idempotency-Key matched an earlier request and nothing new was saved. */
+  replayed?: boolean;
 }
 
 export interface ApiErrorBody {

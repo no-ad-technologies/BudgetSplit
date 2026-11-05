@@ -21,13 +21,19 @@ enum SplitType {
   PERCENT
 }
 
+enum SettlementStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
 model User {
-  id          String        @id @default(uuid()) @db.Uuid
-  displayName String        @map("display_name") @db.VarChar(60)
-  email       String?       @unique
+  id          String         @id @default(uuid()) @db.Uuid
+  displayName String         @map("display_name") @db.VarChar(60)
+  email       String?        @unique
   /// Firebase Auth UID, filled in when US-01 replaces the dev auth stub.
-  authUid     String?       @unique @map("auth_uid")
-  createdAt   DateTime      @default(now()) @map("created_at")
+  authUid     String?        @unique @map("auth_uid")
+  createdAt   DateTime       @default(now()) @map("created_at")
   memberships GroupMember[]
   shares      ExpenseShare[]
 
@@ -35,24 +41,28 @@ model User {
 }
 
 model Group {
-  id        String        @id @default(uuid()) @db.Uuid
-  name      String        @db.VarChar(60)
-  createdAt DateTime      @default(now()) @map("created_at")
-  members   GroupMember[]
-  expenses  Expense[]
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String        @db.VarChar(60)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  members     GroupMember[]
+  expenses    Expense[]
+  settlements Settlement[]
 
   @@map("groups")
 }
 
 model GroupMember {
-  groupId         String     @map("group_id") @db.Uuid
-  userId          String     @map("user_id") @db.Uuid
-  role            MemberRole @default(MEMBER)
-  joinedAt        DateTime   @default(now()) @map("joined_at")
-  group           Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expensesPaid    Expense[]  @relation("ExpensePayer")
-  expensesCreated Expense[]  @relation("ExpenseCreator")
+  groupId             String       @map("group_id") @db.Uuid
+  userId              String       @map("user_id") @db.Uuid
+  role                MemberRole   @default(MEMBER)
+  joinedAt            DateTime     @default(now()) @map("joined_at")
+  group               Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expensesPaid        Expense[]    @relation("ExpensePayer")
+  expensesCreated     Expense[]    @relation("ExpenseCreator")
+  settlementsPaid     Settlement[] @relation("SettlementPayer")
+  settlementsReceived Settlement[] @relation("SettlementPayee")
+  settlementsRecorded Settlement[] @relation("SettlementRecorder")
 
   @@id([groupId, userId])
   @@index([userId])
@@ -93,4 +103,34 @@ model ExpenseShare {
   @@id([expenseId, userId])
   @@index([userId])
   @@map("expense_shares")
+}
+
+/// A payment between two members (US-07). It changes balances only once the receiver confirms it.
+/// Rows are never deleted or edited after a response: together they are the group's audit trail.
+model Settlement {
+  id             String           @id @default(uuid()) @db.Uuid
+  groupId        String           @map("group_id") @db.Uuid
+  fromUserId     String           @map("from_user_id") @db.Uuid
+  toUserId       String           @map("to_user_id") @db.Uuid
+  recordedById   String           @map("recorded_by_id") @db.Uuid
+  /// Always > 0 and <= 10,000,000 (CHECK constraint in the migration).
+  amountCents    Int              @map("amount_cents")
+  status         SettlementStatus @default(PENDING)
+  /// Who confirmed or rejected it, and when. Always the receiver (CHECK constraint).
+  respondedById  String?          @map("responded_by_id") @db.Uuid
+  respondedAt    DateTime?        @map("responded_at")
+  rejectReason   String?          @map("reject_reason") @db.VarChar(140)
+  /// Client-supplied key that makes POST /settlements safe to retry.
+  idempotencyKey String?          @map("idempotency_key") @db.VarChar(100)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  group          Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  // Payer, receiver and recorder must all be members of the group: the database enforces it.
+  payer          GroupMember      @relation("SettlementPayer", fields: [groupId, fromUserId], references: [groupId, userId], onDelete: Restrict)
+  payee          GroupMember      @relation("SettlementPayee", fields: [groupId, toUserId], references: [groupId, userId], onDelete: Restrict)
+  recorder       GroupMember      @relation("SettlementRecorder", fields: [groupId, recordedById], references: [groupId, userId], onDelete: Restrict)
+
+  @@unique([groupId, idempotencyKey])
+  @@index([groupId, createdAt])
+  @@index([groupId, status])
+  @@map("settlements")
 }

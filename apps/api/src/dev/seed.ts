@@ -61,6 +61,6 @@ export async function resetTestDatabase(db: Db, databaseUrl: string): Promise<vo
     throw new Error(`Refusing to reset database "${name}": its name must contain "test".`);
   }
   await db.$executeRawUnsafe(
-    'TRUNCATE TABLE "expense_shares", "expenses", "group_members", "groups", "users" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "settlements", "expense_shares", "expenses", "group_members", "groups", "users" RESTART IDENTITY CASCADE',
   );
 }
