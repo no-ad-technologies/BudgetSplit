@@ -16,7 +16,8 @@ export interface SettleUpCardProps {
 
 /**
  * The settle-up plan (US-06): the fewest payments that bring every balance to $0.00. On their own
- * payments the signed-in member can tap "Record payment" (US-07); it stays Pending until the receiver confirms.
+ * payments the signed-in member can tap "Record payment" (US-07). A payment that has been recorded shows
+ * "Pending" for everyone until the receiver confirms it.
  */
 export function SettleUpCard({ groupId, plan, pending, myUserId, onBalancesChanged }: SettleUpCardProps) {
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -50,7 +51,7 @@ export function SettleUpCard({ groupId, plan, pending, myUserId, onBalancesChang
           return (
             <View key={key} style={styles.row}>
               <Text style={[styles.payment, involved && styles.mine]}>{describePayment(p, myUserId)}</Text>
-              {mine && recorded && <Text style={styles.pendingTag}>Pending</Text>}
+              {recorded && <Text style={styles.pendingTag}>Pending</Text>}
               {mine && !recorded && (
                 <Pressable
                   style={[styles.smallButton, busyKey !== null && styles.disabled]}

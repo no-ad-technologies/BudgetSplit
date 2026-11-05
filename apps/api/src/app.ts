@@ -5,7 +5,7 @@ import { errorHandler, notFound } from "./http/errors.ts";
 import { requestLog } from "./http/requestLog.ts";
 import { balancesRouter } from "./modules/balances/balances.routes.ts";
 import { expensesRouter } from "./modules/expenses/expenses.routes.ts";
-import { groupsRouter } from "./modules/groups/groups.routes.ts";
+import { createGroupHandler, groupsRouter, invitesRouter } from "./modules/groups/groups.routes.ts";
 import { userGroupsRouter } from "./modules/groups/userGroups.routes.ts";
 import { settlementsRouter } from "./modules/settlements/settlements.routes.ts";
 
@@ -37,9 +37,12 @@ export function createApp({ db, logRequests = false, version = "dev" }: AppDeps)
   });
 
   app.use("/users/me", devAuth(db), userGroupsRouter(db));
+  app.use("/invites", devAuth(db), invitesRouter(db));
 
   const group = express.Router({ mergeParams: true });
   group.use(groupsRouter(db), balancesRouter(db), expensesRouter(db), settlementsRouter(db));
+  // POST /groups (create) must come before the /groups/:groupId membership check.
+  app.post("/groups", devAuth(db), createGroupHandler(db));
   app.use("/groups/:groupId", devAuth(db), requireGroupMember(db), group);
 
   app.use(notFound);

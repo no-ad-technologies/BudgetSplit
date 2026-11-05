@@ -31,6 +31,12 @@ export const ApiErrorCode = {
   settlementNotFound: "settlement_not_found",
   notSettlementReceiver: "not_settlement_receiver",
   settlementNotPending: "settlement_not_pending",
+  notGroupAdmin: "not_group_admin",
+  groupFull: "group_full",
+  invalidInviteId: "invalid_invite_id",
+  inviteNotFound: "invite_not_found",
+  inviteExpired: "invite_expired",
+  inviteRevoked: "invite_revoked",
   internalError: "internal_error",
   networkError: "network_error",
   httpError: "http_error",
@@ -51,6 +57,42 @@ export interface GroupDto {
   id: string;
   name: string;
   members: MemberDto[];
+}
+
+/** POST /groups (US-02). The signed-in member becomes the group's first member and admin. */
+export interface CreateGroupRequest {
+  name: string;
+}
+
+/** Links look like budgetsplit://join/<token>; the app scheme is set in apps/mobile/app.json. */
+export const INVITE_LINK_PREFIX = "budgetsplit://join/";
+
+/** How long an invite link works (US-02). */
+export const INVITE_TTL_DAYS = 7;
+
+/** An active invite as the admin sees it. The token itself is only returned once, when it is created. */
+export interface InviteDto {
+  id: string;
+  groupId: string;
+  createdById: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+/** POST /groups/:groupId/invites: the only time the token is visible. Share `url` (or `token`) with roommates. */
+export interface CreatedInviteDto extends InviteDto {
+  token: string;
+  url: string;
+}
+
+export interface InviteListDto {
+  invites: InviteDto[];
+}
+
+/** POST /invites/:token/accept. `joined` is false when the user was already a member. */
+export interface AcceptInviteResponse {
+  group: GroupDto;
+  joined: boolean;
 }
 
 export interface MemberBalanceDto {

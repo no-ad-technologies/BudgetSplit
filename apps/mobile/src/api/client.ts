@@ -1,9 +1,11 @@
 import {
+  type AcceptInviteResponse,
   ApiErrorCode,
   DEV_USER_HEADER,
   IDEMPOTENCY_HEADER,
   type ApiErrorBody,
   type BalancesDto,
+  type CreatedInviteDto,
   type CreateExpenseRequest,
   type CreateExpenseResponse,
   type GroupDto,
@@ -49,6 +51,7 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
     clearTimeout(timer);
   }
 
+  // An empty body (204 No Content, e.g. revoking an invite) resolves to null.
   const body: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const err = (body as ApiErrorBody | null)?.error;
@@ -74,6 +77,11 @@ export const api = {
   getGroup: (groupId: string) => call<GroupDto>(`/groups/${groupId}`),
   getBalances: (groupId: string) => call<BalancesDto>(`/groups/${groupId}/balances`),
   getMyGroups: () => call<UserGroupsDto>("/users/me/groups"),
+  createGroup: (name: string) => call<GroupDto>("/groups", { method: "POST", body: JSON.stringify({ name }) }),
+  createInvite: (groupId: string) => call<CreatedInviteDto>(`/groups/${groupId}/invites`, { method: "POST" }),
+  revokeInvite: (groupId: string, inviteId: string) =>
+    call<null>(`/groups/${groupId}/invites/${inviteId}`, { method: "DELETE" }),
+  acceptInvite: (token: string) => call<AcceptInviteResponse>(`/invites/${token}/accept`, { method: "POST" }),
   getSettleUp: (groupId: string) => call<SettleUpDto>(`/groups/${groupId}/settle-up`),
   getPendingSettlements: (groupId: string) =>
     call<SettlementListDto>(`/groups/${groupId}/settlements?status=PENDING`),
