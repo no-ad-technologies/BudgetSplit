@@ -8,12 +8,12 @@ module: HTTP routes → service (business rules) → Prisma → Postgres. See [A
 
 ## Component diagram
 
-Thick arrows are the walking-skeleton path built in Milestone 2. Dashed nodes are planned, with their story.
+Thick arrows are the walking-skeleton path built in Milestone 2. Modules without a dashed border were built by Milestone 3 (D3). Dashed nodes are planned, with their story.
 
 ```mermaid
 flowchart TB
   subgraph phone["Member's phone · Expo / React Native"]
-    GV["Group view<br/>US-03 · US-05"]
+    GV["Home + group screens<br/>US-02 · US-03 · US-04 · US-05 · US-06 · US-07"]
     AC["API client<br/>typed · retry-safe"]
     SI["Sign-in<br/>US-01 (planned)"]
   end
@@ -21,17 +21,17 @@ flowchart TB
   subgraph api["Render web service (Docker) · Node 22 + Express"]
     HTTP["HTTP layer<br/>zod validation · auth · group-membership check · errors"]
     subgraph modules["Domain modules"]
-      GR["Groups<br/>members, join order"]
-      EX["Expenses<br/>even split in cents"]
-      BA["Balances<br/>net per member"]
-      ST["Settlement<br/>US-06 (planned)"]
+      GR["Groups<br/>create, invite links, join · US-02"]
+      EX["Expenses<br/>even, percent, custom splits in cents · US-03 · US-04"]
+      BA["Balances<br/>net per member, incl. confirmed settlements"]
+      ST["Settlements<br/>fewest-payments plan · confirm/reject · US-06 · US-07"]
       AI["AI insights<br/>US-11 (planned)"]
       RE["Reminders<br/>US-08 (planned)"]
     end
     DA["Data access<br/>Prisma ORM 7 · pg adapter"]
   end
 
-  PG[("Render Postgres 17<br/>users · groups · group_members · expenses · expense_shares")]
+  PG[("Render Postgres 17<br/>users · groups · group_members · group_invites · expenses · expense_shares · settlements")]
   FB["Firebase Auth<br/>US-01 (planned)"]
   LLM["Hosted LLM API<br/>aliases + totals only"]
   PUSH["Expo Push → FCM / APNs"]
@@ -39,7 +39,8 @@ flowchart TB
 
   GV ==> AC ==>|HTTPS · JSON| HTTP ==> EX ==> BA ==> DA ==>|SQL, private network| PG
   HTTP --> GR
-  HTTP -.-> ST
+  HTTP --> ST
+  ST --> BA
   SI -.->|sign in| FB
   HTTP -.->|verify ID token| FB
   AI -.-> LLM
@@ -47,7 +48,7 @@ flowchart TB
   CRON -.-> PG
 
   classDef planned stroke-dasharray: 5 4,color:#666;
-  class SI,ST,AI,RE,FB,LLM,PUSH,CRON planned;
+  class SI,AI,RE,FB,LLM,PUSH,CRON planned;
 ```
 
 ## Request path of the walking skeleton (US-03)
@@ -68,6 +69,8 @@ flowchart TB
 | `group_members` | (`group_id`, `user_id`), `role`, `joined_at` | composite primary key |
 | `expenses` | `id`, `group_id`, `paid_by_id`, `created_by_id`, `amount_cents`, `idempotency_key` | payer and creator must be members of the same group (composite foreign keys); `0 < amount_cents <= 1,000,000`; unique (`group_id`, `idempotency_key`) |
 | `expense_shares` | (`expense_id`, `user_id`), `share_cents` | `share_cents >= 0` |
+| `settlements` (US-07) | `id`, `group_id`, `from_user_id`, `to_user_id`, `recorded_by_id`, `amount_cents`, `status`, `responded_by_id`, `responded_at`, `reject_reason` | payer, receiver and recorder are group members (composite FKs); `0 < amount_cents <= 10,000,000`; never to yourself; response fields present exactly when not PENDING; only the receiver responds; a rejection has a reason |
+| `group_invites` (US-02) | `id`, `group_id`, `token_hash`, `created_by_id`, `expires_at`, `revoked_at` | only a SHA-256 hash of the token; expires within 7 days of creation; creator is a member |
 
 ## Quality attributes (Ch. 4, Table 4.2)
 

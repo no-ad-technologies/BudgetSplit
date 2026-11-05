@@ -5,9 +5,10 @@
 Shared-expense splitter for roommates and trips: log an expense, split it, and always know who owes whom.
 Software engineering course project by **Rick Daniel, Samuel Mendoza and James Hays**.
 
-> **Milestone 2 status:** walking skeleton running end to end. On the phone you can see a group's balances and add
-> an evenly split expense; the API validates it, splits it in integer cents, stores it in PostgreSQL in one
-> transaction and returns the new balances.
+> **Milestone 3 status:** MVP core features built in increments. Create a group and invite roommates with a link
+> (US-02), split expenses evenly, by percentage or by custom amounts (US-03, US-04), see balances on every screen
+> (US-05), get the fewest payments to settle up (US-06) and confirm each payment on both sides (US-07).
+> Sign-in (US-01) is still the dev stub (ADR 0004). D3 evidence: [docs/m3-report.md](docs/m3-report.md).
 
 ## Repository layout
 
@@ -17,7 +18,8 @@ apps/
   mobile/     Expo SDK 57 / React Native 0.86 app (TypeScript).
 packages/
   shared/     API contract types and money helpers used by both apps.
-docs/         Architecture, ADRs, branching workflow, backlog, walking-skeleton evidence.
+docs/         Architecture, ADRs, branching workflow, backlog, walking-skeleton evidence, D3 report,
+              testing (equivalence partitioning), refactoring log, AI logs.
 scripts/      Board bootstrap (GitHub issues + project), local DB init.
 .github/      CI workflow, PR template, user-story issue form.
 render.yaml   Production deployment as code (Render Blueprint).
@@ -59,23 +61,32 @@ curl -X POST http://localhost:4000/groups/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/e
 
 ```bash
 npm run typecheck    # all three workspaces
-npm test             # shared (23), mobile (7), API (38: unit + integration against budgetsplit_test)
+npm test             # shared (43), mobile (24), API (155: unit + integration against budgetsplit_test)
+npm run test:seeded-bugs -w @budgetsplit/api   # D3 experiment: 9 seeded bugs vs AI-generated and hand-designed tests
 ```
 
 The API integration tests empty the test database before each test and refuse to run against any database whose
 name doesn't contain `test`.
 
-## API (walking skeleton)
+## API
 
 | Method | Path | Story | Notes |
 | --- | --- | --- | --- |
 | GET | `/health` | — | Render health check; reports database reachability |
-| GET | `/groups/:groupId` | US-02 (read only) | Group and members in join order |
-| GET | `/groups/:groupId/balances` | US-05 | Net per member; always sums to 0 |
+| GET | `/users/me/groups` | US-05 | Home screen: my groups in join order, my net in each |
+| POST | `/groups` | US-02 | Create a group; the creator is its first member and admin |
+| GET | `/groups/:groupId` | US-02 | Group and members in join order |
+| GET, POST | `/groups/:groupId/invites` | US-02 | Admins: list active invites / create a 7-day `budgetsplit://join/<token>` link |
+| DELETE | `/groups/:groupId/invites/:inviteId` | US-02 | Admins: revoke an invite early |
+| POST | `/invites/:token/accept` | US-02 | Join the group behind an invite (201, or 200 if already a member) |
+| GET | `/groups/:groupId/balances` | US-05, US-07 | Net per member, counting confirmed settlements; always sums to 0 |
 | GET | `/groups/:groupId/expenses?limit=20` | US-03 | Newest first |
-| POST | `/groups/:groupId/expenses` | US-03 | Even split; `Idempotency-Key` header makes retries safe |
+| POST | `/groups/:groupId/expenses` | US-03, US-04 | `split`: `EVEN` (default), `PERCENT` (basis points) or `EXACT` (cents); `Idempotency-Key` makes retries safe |
+| GET | `/groups/:groupId/settle-up` | US-06 | Fewest payments that clear every balance (exact up to 12 people) |
+| GET, POST | `/groups/:groupId/settlements` | US-07 | List (`?status=PENDING`) / record "I paid X" as pending |
+| POST | `/groups/:groupId/settlements/:id/confirm`, `/reject` | US-07 | Receiver only; reject needs a `reason` |
 
-Every group route needs `X-User-Id` (dev auth stub until US-01) and returns 403 to non-members.
+Every route except `/health` needs `X-User-Id` (dev auth stub until US-01); group routes return 403 to non-members.
 Errors always look like `{ "error": { "code", "message", "details?" } }`.
 
 ## How we work
