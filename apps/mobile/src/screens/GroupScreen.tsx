@@ -14,7 +14,8 @@ import { ExpenseForm } from "../components/ExpenseForm";
 import { InviteCard } from "../components/InviteCard";
 import { PendingSettlementsCard } from "../components/PendingSettlementsCard";
 import { SettleUpCard } from "../components/SettleUpCard";
-import { DEV_USER_ID, GROUP_ID } from "../config";
+import { useMe } from "../auth/AuthContext";
+import { GROUP_ID } from "../config";
 import { useGroupData } from "../hooks/useGroupData";
 import { colors } from "../theme";
 
@@ -26,6 +27,7 @@ import { colors } from "../theme";
  */
 export function GroupScreen({ groupId }: { groupId?: string } = {}) {
   const activeGroupId = groupId ?? GROUP_ID;
+  const myUserId = useMe().id;
   const { group, balances, settleUp, pending, loadError, refreshing, reload, onRefresh, onBalancesChanged } =
     useGroupData(activeGroupId);
 
@@ -46,7 +48,7 @@ export function GroupScreen({ groupId }: { groupId?: string } = {}) {
     );
   }
 
-  const me = group.members.find((m) => m.userId === DEV_USER_ID);
+  const me = group.members.find((m) => m.userId === myUserId);
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -56,20 +58,20 @@ export function GroupScreen({ groupId }: { groupId?: string } = {}) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <Text style={styles.title}>{group.name}</Text>
-        <Text style={styles.subtitle}>Signed in as {me?.displayName ?? "unknown"} (dev mode)</Text>
+        <Text style={styles.subtitle}>Signed in as {me?.displayName ?? "unknown"}</Text>
 
         <BalanceList balances={balances.balances} />
         <PendingSettlementsCard
           groupId={activeGroupId}
           pending={pending}
-          myUserId={DEV_USER_ID}
+          myUserId={myUserId}
           onBalancesChanged={onBalancesChanged}
         />
         <SettleUpCard
           groupId={activeGroupId}
           plan={settleUp}
           pending={pending}
-          myUserId={DEV_USER_ID}
+          myUserId={myUserId}
           onBalancesChanged={onBalancesChanged}
         />
         <ExpenseForm groupId={activeGroupId} members={group.members} onExpenseSaved={onBalancesChanged} />
