@@ -23,16 +23,21 @@ services:
         - package-lock.json
         - render.yaml
     envVars:
+      # Secret for the AI summary (US-11). Set it in the Render dashboard; never commit it.
+      # Without it the API still runs and the summary endpoint returns the numbers only.
+      - key: ANTHROPIC_API_KEY
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: budgetsplit-db
           property: connectionString
+      # Real sign-in (US-01, ADR 0007): every request needs a Firebase ID token.
       - key: AUTH_MODE
-        value: dev
-      # M2 demo only: the deployed walking skeleton holds seed data and uses the dev auth stub.
-      # Delete this variable when US-01 (Firebase Auth) ships; the API then refuses dev auth in production.
-      - key: ALLOW_DEV_AUTH_IN_PRODUCTION
-        value: "true"
+        value: firebase
+      # Not a secret, but it differs per Firebase project, so it is set in the Render dashboard
+      # (docs/auth-setup.md). The API refuses to start without it.
+      - key: FIREBASE_PROJECT_ID
+        sync: false
 
 databases:
   - name: budgetsplit-db

@@ -1,6 +1,6 @@
 # ADR 0004 · Dev-only auth stub now, Firebase Authentication in US-01
 
-- **Status:** Accepted · 2026-10-13
+- **Status:** Superseded for production by [ADR 0007](0007-firebase-id-tokens.md) · 2026-11-12. The stub remains for local development and tests only.
 
 ## Context
 The walking skeleton must run through the real request path, including authorization, before sign-in exists.

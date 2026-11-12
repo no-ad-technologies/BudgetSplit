@@ -1,5 +1,6 @@
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { describeNet } from "@budgetsplit/shared";
+import { useAuth, useMe } from "../auth/AuthContext";
 import { GroupActions } from "../components/GroupActions";
 import { useMyGroups } from "../hooks/useMyGroups";
 import { colors, netColor } from "../theme";
@@ -10,6 +11,8 @@ import { colors, netColor } from "../theme";
  */
 export function HomeScreen({ onOpenGroup }: { onOpenGroup?: (groupId: string) => void } = {}) {
   const { groups, loadError, refreshing, reload, onRefresh } = useMyGroups();
+  const { signOut, canSignOut } = useAuth();
+  const me = useMe();
 
   if (!groups) {
     return (
@@ -34,7 +37,9 @@ export function HomeScreen({ onOpenGroup }: { onOpenGroup?: (groupId: string) =>
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <Text style={styles.title}>BudgetSplit</Text>
-      <Text style={styles.subtitle}>Your balances across all groups</Text>
+      <Text style={styles.subtitle}>
+        Signed in as {me.displayName} · your balances across all groups
+      </Text>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Groups</Text>
@@ -61,6 +66,12 @@ export function HomeScreen({ onOpenGroup }: { onOpenGroup?: (groupId: string) =>
           onOpenGroup?.(groupId);
         }}
       />
+
+      {canSignOut && (
+        <Pressable style={styles.secondaryButton} onPress={() => void signOut()} accessibilityRole="button">
+          <Text style={[styles.secondaryButtonText, styles.centerText]}>Sign out</Text>
+        </Pressable>
+      )}
     </ScrollView>
   );
 }
@@ -79,4 +90,5 @@ const styles = StyleSheet.create({
   errorText: { color: colors.owes, fontSize: 14 },
   secondaryButton: { borderWidth: 1, borderColor: colors.accent, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20 },
   secondaryButtonText: { color: colors.accent, fontSize: 15, fontWeight: "600" },
+  centerText: { textAlign: "center" },
 });

@@ -6,6 +6,17 @@ Each entry names the story it serves, so any change can be traced back (and reve
 ## [Unreleased]
 
 ### Added
+- **US-01 · Sign in and keep my data across devices.** The API verifies a Firebase ID token on every
+  request (`AUTH_MODE=firebase`, `FIREBASE_PROJECT_ID`; ADR 0007) and creates the account on first
+  sign-in; `GET /users/me` returns it. Any missing, expired, forged or wrong-project token is a 401.
+  Mobile: sign-in / create-account screen (email + password), ID token kept in memory, refresh token in
+  the Keychain / Keystore (`expo-secure-store`), sign-out. New dependencies: `jose` (API),
+  `expo-secure-store` (mobile). Setup: [docs/auth-setup.md](docs/auth-setup.md).
+  Not yet done from the story: Google sign-in and email links (client-only follow-up).
+- **Per-user rate limit.** Every authenticated route allows 120 requests per user per minute
+  (`RATE_LIMIT_PER_MINUTE`), then answers `429 rate_limited` with `Retry-After` (ADR 0008).
+- Request logs no longer contain invite tokens: `POST /invites/<token>/accept` is logged as
+  `/invites/[token]/accept`. The database already stored only the token's hash; the log kept the plain value.
 - **US-02 · Create a group and invite roommates.** `POST /groups` (creator becomes admin); admins create,
   list and revoke 7-day invite links (`/groups/:id/invites`), stored only as SHA-256 hashes (migration
   `20261103173129_group_invites`); `POST /invites/:token/accept` joins. Joins lock the group row so
@@ -35,8 +46,22 @@ Each entry names the story it serves, so any change can be traced back (and reve
 - D3 docs: [refactoring log](docs/refactoring-log.md), [AI pair-programming log](docs/ai/m3-pair-programming-log.md),
   [D3 report](docs/m3-report.md); screenshots in `docs/images/m3/`.
 - Integration tests for `GET /users/me/groups` (it had none).
+- **US-11 · Neutral AI fairness summary.** `GET /groups/:id/summary?days=30|90` returns each member's
+  paid / own-share totals for the window and, when available, a short summary written by Anthropic's
+  `claude-haiku-5-5` (`ANTHROPIC_API_KEY`, optional). The model receives aliases and totals only
+  (ADR 0005); its answer is shown only if every figure in it is one the server sent, it names only known
+  aliases, and it contains no judgement, link or prompt text. Otherwise the app shows "Summary
+  unavailable" with the numbers. Summaries are cached until the numbers change; model calls are capped
+  at 5 per member and 10 per group per 10 minutes and 500 per day. Mobile: "Contribution summary" card.
+- Prompt-injection tests and a ten-case evaluation set for the summary, with a live runner
+  (`npm run eval:ai -w @budgetsplit/api`) and a manual GitHub Actions workflow
+  ([docs/ai/m4-ai-evaluation.md](docs/ai/m4-ai-evaluation.md)).
 
 ### Changed
+- **Production no longer accepts the `X-User-Id` dev header.** `render.yaml` sets `AUTH_MODE=firebase` and
+  drops `ALLOW_DEV_AUTH_IN_PRODUCTION`. The dev stub remains for local development and tests (ADR 0004).
+  `createApp` takes an `authenticate` middleware; the mobile app reads the signed-in user from `useMe()`
+  instead of `DEV_USER_ID`.
 - CI runs the full suite on **every push to every branch** (was: `main` only) plus every PR and manual
   re-runs; runs on `main` are never cancelled, so every main commit gets a result. Status badge in the README.
 - `userGroups.routes.ts` reuses `getGroupBalances` instead of a copied balance query (refactoring log #3);

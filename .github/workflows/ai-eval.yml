@@ -1,0 +1,43 @@
+# Live evaluation of the AI fairness summary (US-11): the ten-case evaluation set and the prompt-injection
+# probes, against the real model. Manual only (Actions tab -> "AI evaluation" -> Run workflow), because
+# every run makes paid API calls. The regular CI workflow never needs the API key.
+#
+# Needs the repository secret ANTHROPIC_API_KEY (Settings -> Secrets and variables -> Actions).
+name: AI evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Answers per case
+        default: "3"
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    name: Evaluation set + injection probes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Run against the live model
+        run: npm run eval:ai -w @budgetsplit/api
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EVAL_RUNS: ${{ inputs.runs }}
+      - name: Show the results on the run page
+        if: always()
+        run: cat docs/ai/m4-eval-results.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep the results file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m4-eval-results
+          path: docs/ai/m4-eval-results.md

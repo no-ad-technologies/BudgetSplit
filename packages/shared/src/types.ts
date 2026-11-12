@@ -4,8 +4,14 @@
  * instead of failing on someone's phone.
  */
 
-/** Header the dev-only auth stub reads. Replaced by a Firebase ID token in US-01. */
+/** Header the dev-only auth stub reads (local development and tests). Production uses a Bearer token (US-01). */
 export const DEV_USER_HEADER = "X-User-Id";
+
+/** GET /users/me (US-01): the account behind the caller's token. */
+export interface MeDto {
+  id: string;
+  displayName: string;
+}
 
 /** Header that makes POST /expenses safe to retry (US-03, trade-off T1). */
 export const IDEMPOTENCY_HEADER = "Idempotency-Key";
@@ -20,6 +26,7 @@ export const ApiErrorCode = {
   validationFailed: "validation_failed",
   invalidJson: "invalid_json",
   unauthenticated: "unauthenticated",
+  rateLimited: "rate_limited",
   notAMember: "not_a_member",
   invalidGroupId: "invalid_group_id",
   groupNotFound: "group_not_found",
@@ -248,4 +255,45 @@ export interface ApiErrorBody {
     message: string;
     details?: unknown;
   };
+}
+
+/** How far back a fairness summary can look (US-11). */
+export const SUMMARY_WINDOW_DAYS = [30, 90] as const;
+export type SummaryWindowDays = (typeof SUMMARY_WINDOW_DAYS)[number];
+
+/** One member's contribution over the summary window (US-11). Computed by the server, never by the model. */
+export interface MemberContributionDto {
+  userId: string;
+  displayName: string;
+  /** What the model calls this member ("Member A"). It never sees the name (ADR 0005). */
+  alias: string;
+  /** Total this member paid for the group's expenses in the window, in cents. */
+  paidCents: number;
+  /** Total of this member's own shares of those expenses, in cents. */
+  shareCents: number;
+  /** paidCents − shareCents. Positive = paid more than their own share. */
+  differenceCents: number;
+  /** paidCents as a whole percentage of everything the group spent in the window. */
+  paidPercent: number;
+}
+
+/**
+ * - `ok`: `summary` is the model's text, checked against the numbers below.
+ * - `no_expenses`: nothing to summarize in the window; the model was not called.
+ * - `limited`: this member or group has asked for too many summaries recently.
+ * - `unavailable`: the model was off, slow, failed, or its answer did not pass the checks.
+ * The numbers are always present, whatever the status.
+ */
+export type FairnessSummaryStatus = "ok" | "no_expenses" | "limited" | "unavailable";
+
+/** GET /groups/:groupId/summary?days=30 (US-11). */
+export interface FairnessSummaryDto {
+  groupId: string;
+  days: SummaryWindowDays;
+  expenseCount: number;
+  totalCents: number;
+  members: MemberContributionDto[];
+  status: FairnessSummaryStatus;
+  /** Uses aliases ("Member A"); the app swaps in names with `withMemberNames`. Null unless status is `ok`. */
+  summary: string | null;
 }

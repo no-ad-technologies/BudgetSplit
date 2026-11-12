@@ -15,7 +15,7 @@ flowchart TB
   subgraph phone["Member's phone · Expo / React Native"]
     GV["Home + group screens<br/>US-02 · US-03 · US-04 · US-05 · US-06 · US-07"]
     AC["API client<br/>typed · retry-safe"]
-    SI["Sign-in<br/>US-01 (planned)"]
+    SI["Sign-in<br/>email + password · US-01"]
   end
 
   subgraph api["Render web service (Docker) · Node 22 + Express"]
@@ -25,14 +25,14 @@ flowchart TB
       EX["Expenses<br/>even, percent, custom splits in cents · US-03 · US-04"]
       BA["Balances<br/>net per member, incl. confirmed settlements"]
       ST["Settlements<br/>fewest-payments plan · confirm/reject · US-06 · US-07"]
-      AI["AI insights<br/>US-11 (planned)"]
+      AI["AI insights<br/>contribution summary · US-11"]
       RE["Reminders<br/>US-08 (planned)"]
     end
     DA["Data access<br/>Prisma ORM 7 · pg adapter"]
   end
 
   PG[("Render Postgres 17<br/>users · groups · group_members · group_invites · expenses · expense_shares · settlements")]
-  FB["Firebase Auth<br/>US-01 (planned)"]
+  FB["Firebase Auth<br/>issues ID tokens · US-01"]
   LLM["Hosted LLM API<br/>aliases + totals only"]
   PUSH["Expo Push → FCM / APNs"]
   CRON["Render cron job<br/>same image · US-10"]
@@ -48,7 +48,7 @@ flowchart TB
   CRON -.-> PG
 
   classDef planned stroke-dasharray: 5 4,color:#666;
-  class SI,AI,RE,FB,LLM,PUSH,CRON planned;
+  class AI,RE,LLM,PUSH,CRON planned;
 ```
 
 ## Request path of the walking skeleton (US-03)
@@ -80,9 +80,9 @@ availability (low). The full justification and the trade-offs (T1–T4) are in t
 | Attribute | Where it shows up in the code |
 | --- | --- |
 | Reliability | `split.ts` (integer cents), `compute.ts` (sum-to-zero check), transaction + idempotency in `expenses.service.ts`, CHECK constraints in the migration |
-| Security | `http/auth.ts` (authentication seam + membership check), `config.ts` (refuses dev auth in production unless explicitly allowed), zod strict bodies |
+| Security | `http/auth.ts` + `http/tokenVerifier.ts` (Firebase ID token verified on every request, ADR 0007; membership check), `config.ts` (refuses dev auth in production), `http/rateLimit.ts` (per-user limit, ADR 0008), zod strict bodies |
 | Usability | one-screen add-expense, even split by default, inline errors (`expenseDraft.ts`) |
 | Maintainability | `packages/shared` contract, one module per domain area, CI on every PR |
-| Resilience | external calls will sit behind adapters with timeouts (US-08, US-11); the ledger never depends on them |
+| Resilience | the model call sits behind the `LlmClient` adapter with a 10-second timeout and falls back to plain numbers (US-11); US-08 will follow the same pattern; the ledger never depends on either |
 | Responsiveness | expense response includes fresh balances (one round trip); `requestLog.ts` records latency per request |
 | Availability | `/health` endpoint for Render health checks; graceful SIGTERM shutdown in `server.ts` |

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { formatCents, type BalancesDto, type MemberDto } from "@budgetsplit/shared";
 import { api, ApiError, newIdempotencyKey } from "../api/client";
-import { DEV_USER_ID } from "../config";
+import { useMe } from "../auth/AuthContext";
 import { splitProgress, validateDraft, type DraftResult, type SplitMode } from "../screens/expenseDraft";
 import { colors } from "../theme";
 
@@ -29,7 +29,8 @@ const SPLIT_MODES: { mode: SplitMode; label: string }[] = [
 export function ExpenseForm({ groupId, members, onExpenseSaved }: ExpenseFormProps) {
   const [description, setDescription] = useState("");
   const [amountText, setAmountText] = useState("");
-  const [paidById, setPaidById] = useState(DEV_USER_ID);
+  const myUserId = useMe().id;
+  const [paidById, setPaidById] = useState(myUserId);
   const [splitMode, setSplitMode] = useState<SplitMode>("EVEN");
   const [shareText, setShareText] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -64,7 +65,7 @@ export function ExpenseForm({ groupId, members, onExpenseSaved }: ExpenseFormPro
     try {
       const response = await api.addExpense(groupId, result.request, draftKey.current);
       onExpenseSaved(response.balances);
-      const mine = response.expense.shares.find((s) => s.userId === DEV_USER_ID)?.shareCents ?? 0;
+      const mine = response.expense.shares.find((s) => s.userId === myUserId)?.shareCents ?? 0;
       setLastSaved(
         `Saved ${response.expense.description}: ${formatCents(response.expense.amountCents)}. Your share: ${formatCents(mine)}.`,
       );
