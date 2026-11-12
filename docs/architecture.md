@@ -25,7 +25,7 @@ flowchart TB
       EX["Expenses<br/>even, percent, custom splits in cents · US-03 · US-04"]
       BA["Balances<br/>net per member, incl. confirmed settlements"]
       ST["Settlements<br/>fewest-payments plan · confirm/reject · US-06 · US-07"]
-      AI["AI insights<br/>US-11 (planned)"]
+      AI["AI insights<br/>contribution summary · US-11"]
       RE["Reminders<br/>US-08 (planned)"]
     end
     DA["Data access<br/>Prisma ORM 7 · pg adapter"]
@@ -83,6 +83,6 @@ availability (low). The full justification and the trade-offs (T1–T4) are in t
 | Security | `http/auth.ts` + `http/tokenVerifier.ts` (Firebase ID token verified on every request, ADR 0007; membership check), `config.ts` (refuses dev auth in production), `http/rateLimit.ts` (per-user limit, ADR 0008), zod strict bodies |
 | Usability | one-screen add-expense, even split by default, inline errors (`expenseDraft.ts`) |
 | Maintainability | `packages/shared` contract, one module per domain area, CI on every PR |
-| Resilience | external calls will sit behind adapters with timeouts (US-08, US-11); the ledger never depends on them |
+| Resilience | the model call sits behind the `LlmClient` adapter with a 10-second timeout and falls back to plain numbers (US-11); US-08 will follow the same pattern; the ledger never depends on either |
 | Responsiveness | expense response includes fresh balances (one round trip); `requestLog.ts` records latency per request |
 | Availability | `/health` endpoint for Render health checks; graceful SIGTERM shutdown in `server.ts` |

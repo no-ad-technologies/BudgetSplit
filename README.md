@@ -67,8 +67,9 @@ curl -X POST http://localhost:4000/groups/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/e
 
 ```bash
 npm run typecheck    # all three workspaces
-npm test             # shared (43), mobile (24), API (155: unit + integration against budgetsplit_test)
+npm test             # shared (49), mobile (47), API (254: unit + integration against budgetsplit_test)
 npm run test:seeded-bugs -w @budgetsplit/api   # D3 experiment: 9 seeded bugs vs AI-generated and hand-designed tests
+npm run eval:ai -w @budgetsplit/api            # live AI evaluation + injection probes (needs ANTHROPIC_API_KEY)
 ```
 
 The API integration tests empty the test database before each test and refuse to run against any database whose
@@ -90,6 +91,7 @@ name doesn't contain `test`.
 | GET | `/groups/:groupId/expenses?limit=20` | US-03 | Newest first |
 | POST | `/groups/:groupId/expenses` | US-03, US-04 | `split`: `EVEN` (default), `PERCENT` (basis points) or `EXACT` (cents); `Idempotency-Key` makes retries safe |
 | GET | `/groups/:groupId/settle-up` | US-06 | Fewest payments that clear every balance (exact up to 12 people) |
+| GET | `/groups/:groupId/summary?days=30` | US-11 | Paid / own-share totals for 30 or 90 days, plus an AI-written summary when available |
 | GET, POST | `/groups/:groupId/settlements` | US-07 | List (`?status=PENDING`) / record "I paid X" as pending |
 | POST | `/groups/:groupId/settlements/:id/confirm`, `/reject` | US-07 | Receiver only; reject needs a `reason` |
 
@@ -98,6 +100,15 @@ Every route except `/health` needs `Authorization: Bearer <Firebase ID token>` a
 production refuses to start in that mode. Group routes return 403 to non-members.
 Each signed-in user gets 120 requests a minute, then `429` with `Retry-After` ([ADR 0008](docs/adr/0008-per-user-rate-limit.md)).
 Errors always look like `{ "error": { "code", "message", "details?" } }`.
+
+## AI feature: contribution summary (US-11)
+
+The group screen can summarize who paid for what over the last 30 or 90 days. The server computes every
+number; a hosted model (Anthropic `claude-haiku-5-5`) only puts them into two to four neutral sentences.
+It receives aliases ("Member A") and totals, never names, emails or expense descriptions
+([ADR 0005](docs/adr/0005-llm-privacy.md)), and its answer is checked before anyone sees it. Set
+`ANTHROPIC_API_KEY` to turn it on; without it the numbers are shown on their own.
+Prompt-injection testing and the evaluation set: [docs/ai/m4-ai-evaluation.md](docs/ai/m4-ai-evaluation.md).
 
 ## How we work
 

@@ -44,6 +44,16 @@ Each entry names the story it serves, so any change can be traced back (and reve
 - D3 docs: [refactoring log](docs/refactoring-log.md), [AI pair-programming log](docs/ai/m3-pair-programming-log.md),
   [D3 report](docs/m3-report.md); screenshots in `docs/images/m3/`.
 - Integration tests for `GET /users/me/groups` (it had none).
+- **US-11 · Neutral AI fairness summary.** `GET /groups/:id/summary?days=30|90` returns each member's
+  paid / own-share totals for the window and, when available, a short summary written by Anthropic's
+  `claude-haiku-5-5` (`ANTHROPIC_API_KEY`, optional). The model receives aliases and totals only
+  (ADR 0005); its answer is shown only if every figure in it is one the server sent, it names only known
+  aliases, and it contains no judgement, link or prompt text. Otherwise the app shows "Summary
+  unavailable" with the numbers. Summaries are cached until the numbers change; model calls are capped
+  at 5 per member and 10 per group per 10 minutes and 500 per day. Mobile: "Contribution summary" card.
+- Prompt-injection tests and a ten-case evaluation set for the summary, with a live runner
+  (`npm run eval:ai -w @budgetsplit/api`) and a manual GitHub Actions workflow
+  ([docs/ai/m4-ai-evaluation.md](docs/ai/m4-ai-evaluation.md)).
 
 ### Changed
 - **Production no longer accepts the `X-User-Id` dev header.** `render.yaml` sets `AUTH_MODE=firebase` and
