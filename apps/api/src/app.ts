@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type RequestHandler } from "express";
 import type { Db } from "./db.ts";
 import { devAuth, requireGroupMember } from "./http/auth.ts";
 import { errorHandler, notFound } from "./http/errors.ts";
@@ -11,6 +11,11 @@ import { settlementsRouter } from "./modules/settlements/settlements.routes.ts";
 
 export interface AppDeps {
   db: Db;
+  /**
+   * Fills res.locals.user or throws a 401. server.ts passes tokenAuth (Firebase) or devAuth depending on
+   * AUTH_MODE; the integration tests leave it out and get the dev stub.
+   */
+  authenticate?: RequestHandler;
   logRequests?: boolean;
   version?: string;
 }
@@ -21,7 +26,7 @@ export interface AppDeps {
  *
  * Request path: HTTP layer (validation, auth) -> module service (business rules) -> Prisma -> Postgres.
  */
-export function createApp({ db, logRequests = false, version = "dev" }: AppDeps): Express {
+export function createApp({ db, authenticate = devAuth(db), logRequests = false, version = "dev" }: AppDeps): Express {
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "10kb" }));
@@ -36,14 +41,14 @@ export function createApp({ db, logRequests = false, version = "dev" }: AppDeps)
     }
   });
 
-  app.use("/users/me", devAuth(db), userGroupsRouter(db));
-  app.use("/invites", devAuth(db), invitesRouter(db));
+  app.use("/users/me", authenticate, userGroupsRouter(db));
+  app.use("/invites", authenticate, invitesRouter(db));
 
   const group = express.Router({ mergeParams: true });
   group.use(groupsRouter(db), balancesRouter(db), expensesRouter(db), settlementsRouter(db));
   // POST /groups (create) must come before the /groups/:groupId membership check.
-  app.post("/groups", devAuth(db), createGroupHandler(db));
-  app.use("/groups/:groupId", devAuth(db), requireGroupMember(db), group);
+  app.post("/groups", authenticate, createGroupHandler(db));
+  app.use("/groups/:groupId", authenticate, requireGroupMember(db), group);
 
   app.use(notFound);
   app.use(errorHandler);

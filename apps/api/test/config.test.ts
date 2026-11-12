@@ -16,6 +16,13 @@ describe("loadConfig", () => {
     );
   });
 
+  it("firebase auth needs a project id, and then production starts without any override", () => {
+    expect(() => loadConfig({ ...base, AUTH_MODE: "firebase" })).toThrow(/FIREBASE_PROJECT_ID/);
+    expect(() => loadConfig({ ...base, AUTH_MODE: "firebase", FIREBASE_PROJECT_ID: "Not A Project" })).toThrow();
+    const config = loadConfig({ ...base, NODE_ENV: "production", AUTH_MODE: "firebase", FIREBASE_PROJECT_ID: "budgetsplit-1a2b3" });
+    expect(config.auth).toEqual({ mode: "firebase", firebaseProjectId: "budgetsplit-1a2b3" });
+  });
+
   it("requires DATABASE_URL", () => {
     expect(() => loadConfig({})).toThrow();
   });

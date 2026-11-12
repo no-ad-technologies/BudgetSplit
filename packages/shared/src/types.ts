@@ -4,8 +4,14 @@
  * instead of failing on someone's phone.
  */
 
-/** Header the dev-only auth stub reads. Replaced by a Firebase ID token in US-01. */
+/** Header the dev-only auth stub reads (local development and tests). Production uses a Bearer token (US-01). */
 export const DEV_USER_HEADER = "X-User-Id";
+
+/** GET /users/me (US-01): the account behind the caller's token. */
+export interface MeDto {
+  id: string;
+  displayName: string;
+}
 
 /** Header that makes POST /expenses safe to retry (US-03, trade-off T1). */
 export const IDEMPOTENCY_HEADER = "Idempotency-Key";
