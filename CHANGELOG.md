@@ -6,6 +6,13 @@ Each entry names the story it serves, so any change can be traced back (and reve
 ## [Unreleased]
 
 ### Added
+- **US-01 · Sign in and keep my data across devices.** The API verifies a Firebase ID token on every
+  request (`AUTH_MODE=firebase`, `FIREBASE_PROJECT_ID`; ADR 0007) and creates the account on first
+  sign-in; `GET /users/me` returns it. Any missing, expired, forged or wrong-project token is a 401.
+  Mobile: sign-in / create-account screen (email + password), ID token kept in memory, refresh token in
+  the Keychain / Keystore (`expo-secure-store`), sign-out. New dependencies: `jose` (API),
+  `expo-secure-store` (mobile). Setup: [docs/auth-setup.md](docs/auth-setup.md).
+  Not yet done from the story: Google sign-in and email links (client-only follow-up).
 - **US-02 · Create a group and invite roommates.** `POST /groups` (creator becomes admin); admins create,
   list and revoke 7-day invite links (`/groups/:id/invites`), stored only as SHA-256 hashes (migration
   `20261103173129_group_invites`); `POST /invites/:token/accept` joins. Joins lock the group row so
@@ -35,6 +42,10 @@ Each entry names the story it serves, so any change can be traced back (and reve
 - Integration tests for `GET /users/me/groups` (it had none).
 
 ### Changed
+- **Production no longer accepts the `X-User-Id` dev header.** `render.yaml` sets `AUTH_MODE=firebase` and
+  drops `ALLOW_DEV_AUTH_IN_PRODUCTION`. The dev stub remains for local development and tests (ADR 0004).
+  `createApp` takes an `authenticate` middleware; the mobile app reads the signed-in user from `useMe()`
+  instead of `DEV_USER_ID`.
 - CI runs the full suite on **every push to every branch** (was: `main` only) plus every PR and manual
   re-runs; runs on `main` are never cancelled, so every main commit gets a result. Status badge in the README.
 - `userGroups.routes.ts` reuses `getGroupBalances` instead of a copied balance query (refactoring log #3);

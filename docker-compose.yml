@@ -28,6 +28,8 @@ services:
       DATABASE_URL: postgresql://budgetsplit:budgetsplit@db:5432/budgetsplit
       PORT: "4000"
       NODE_ENV: production
+      # Local container only: lets you poke the production image with X-User-Id and the seeded data.
+      # The deployed service (render.yaml) uses AUTH_MODE=firebase and never sets this.
       ALLOW_DEV_AUTH_IN_PRODUCTION: "true"
     ports:
       - "4000:4000"

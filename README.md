@@ -8,7 +8,10 @@ Software engineering course project by **Rick Daniel, Samuel Mendoza and James H
 > **Milestone 3 status:** MVP core features built in increments. Create a group and invite roommates with a link
 > (US-02), split expenses evenly, by percentage or by custom amounts (US-03, US-04), see balances on every screen
 > (US-05), get the fewest payments to settle up (US-06) and confirm each payment on both sides (US-07).
-> Sign-in (US-01) is still the dev stub (ADR 0004). D3 evidence: [docs/m3-report.md](docs/m3-report.md).
+> D3 evidence: [docs/m3-report.md](docs/m3-report.md).
+>
+> **Milestone 4:** real sign-in (US-01): the deployed API accepts only Firebase ID tokens
+> ([ADR 0007](docs/adr/0007-firebase-id-tokens.md), setup in [docs/auth-setup.md](docs/auth-setup.md)).
 
 ## Repository layout
 
@@ -45,7 +48,10 @@ cp apps/mobile/.env.example apps/mobile/.env.local   # set EXPO_PUBLIC_API_URL t
 npm run dev:mobile                                   # scan the QR code with Expo Go
 ```
 
-Try the API without the app:
+With no Firebase key set, the app runs in dev mode as the seeded user Maya. To use real sign-in, follow
+[docs/auth-setup.md](docs/auth-setup.md).
+
+Try the API without the app (local `AUTH_MODE=dev`):
 
 ```bash
 curl http://localhost:4000/groups/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/balances \
@@ -73,6 +79,7 @@ name doesn't contain `test`.
 | Method | Path | Story | Notes |
 | --- | --- | --- | --- |
 | GET | `/health` | — | Render health check; reports database reachability |
+| GET | `/users/me` | US-01 | The account behind the token; created on first sign-in |
 | GET | `/users/me/groups` | US-05 | Home screen: my groups in join order, my net in each |
 | POST | `/groups` | US-02 | Create a group; the creator is its first member and admin |
 | GET | `/groups/:groupId` | US-02 | Group and members in join order |
@@ -86,7 +93,9 @@ name doesn't contain `test`.
 | GET, POST | `/groups/:groupId/settlements` | US-07 | List (`?status=PENDING`) / record "I paid X" as pending |
 | POST | `/groups/:groupId/settlements/:id/confirm`, `/reject` | US-07 | Receiver only; reject needs a `reason` |
 
-Every route except `/health` needs `X-User-Id` (dev auth stub until US-01); group routes return 403 to non-members.
+Every route except `/health` needs `Authorization: Bearer <Firebase ID token>` and returns 401 without a valid one
+(US-01). Locally, with `AUTH_MODE=dev`, the API accepts an `X-User-Id` header instead, as in the examples above;
+production refuses to start in that mode. Group routes return 403 to non-members.
 Errors always look like `{ "error": { "code", "message", "details?" } }`.
 
 ## How we work
