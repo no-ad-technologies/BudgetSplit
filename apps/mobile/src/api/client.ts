@@ -8,12 +8,14 @@ import {
   type CreatedInviteDto,
   type CreateExpenseRequest,
   type CreateExpenseResponse,
+  type FairnessSummaryDto,
   type GroupDto,
   type MeDto,
   type RecordSettlementRequest,
   type SettleUpDto,
   type SettlementListDto,
   type SettlementResponse,
+  type SummaryWindowDays,
   type UserGroupsDto,
 } from "@budgetsplit/shared";
 import { API_URL, DEV_USER_ID, REQUEST_TIMEOUT_MS } from "../config";
@@ -108,6 +110,9 @@ export const api = {
     call<null>(`/groups/${groupId}/invites/${inviteId}`, { method: "DELETE" }),
   acceptInvite: (token: string) => call<AcceptInviteResponse>(`/invites/${token}/accept`, { method: "POST" }),
   getSettleUp: (groupId: string) => call<SettleUpDto>(`/groups/${groupId}/settle-up`),
+  /** US-11. The model has up to 10 seconds, so this call can be slower than the others. */
+  getSummary: (groupId: string, days: SummaryWindowDays) =>
+    call<FairnessSummaryDto>(`/groups/${groupId}/summary?days=${days}`),
   getPendingSettlements: (groupId: string) =>
     call<SettlementListDto>(`/groups/${groupId}/settlements?status=PENDING`),
   recordSettlement: (groupId: string, body: RecordSettlementRequest, idempotencyKey: string) =>
