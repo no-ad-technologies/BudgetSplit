@@ -15,6 +15,8 @@ Each entry names the story it serves, so any change can be traced back (and reve
   Not yet done from the story: Google sign-in and email links (client-only follow-up).
 - **Per-user rate limit.** Every authenticated route allows 120 requests per user per minute
   (`RATE_LIMIT_PER_MINUTE`), then answers `429 rate_limited` with `Retry-After` (ADR 0008).
+- Request logs no longer contain invite tokens: `POST /invites/<token>/accept` is logged as
+  `/invites/[token]/accept`. The database already stored only the token's hash; the log kept the plain value.
 - **US-02 · Create a group and invite roommates.** `POST /groups` (creator becomes admin); admins create,
   list and revoke 7-day invite links (`/groups/:id/invites`), stored only as SHA-256 hashes (migration
   `20261103173129_group_invites`); `POST /invites/:token/accept` joins. Joins lock the group row so
