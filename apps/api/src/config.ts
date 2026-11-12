@@ -17,6 +17,8 @@ const EnvSchema = z.object({
     .optional(),
   /** Dev auth is refused in production unless this is explicitly "true". Nothing we deploy sets it any more. */
   ALLOW_DEV_AUTH_IN_PRODUCTION: z.enum(["true", "false"]).default("false"),
+  /** Requests one signed-in user may make per minute before getting 429s. 0 turns the limit off. */
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).max(10_000).default(120),
   LOG_REQUESTS: z.enum(["true", "false"]).optional(),
 });
 
@@ -28,6 +30,8 @@ export interface Config {
   databaseUrl: string;
   authMode: "dev" | "firebase";
   auth: AuthConfig;
+  /** Undefined when the limit is switched off. */
+  userRateLimit?: { limit: number; windowMs: number };
   logRequests: boolean;
 }
 
@@ -54,6 +58,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     databaseUrl: parsed.DATABASE_URL,
     authMode: parsed.AUTH_MODE,
     auth,
+    userRateLimit: parsed.RATE_LIMIT_PER_MINUTE > 0 ? { limit: parsed.RATE_LIMIT_PER_MINUTE, windowMs: 60_000 } : undefined,
     logRequests: parsed.LOG_REQUESTS ? parsed.LOG_REQUESTS === "true" : parsed.NODE_ENV !== "test",
   };
 }

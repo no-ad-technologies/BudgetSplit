@@ -23,6 +23,12 @@ describe("loadConfig", () => {
     expect(config.auth).toEqual({ mode: "firebase", firebaseProjectId: "budgetsplit-1a2b3" });
   });
 
+  it("limits each user to 120 requests a minute by default; 0 switches it off", () => {
+    expect(loadConfig({ ...base }).userRateLimit).toEqual({ limit: 120, windowMs: 60_000 });
+    expect(loadConfig({ ...base, RATE_LIMIT_PER_MINUTE: "30" }).userRateLimit?.limit).toBe(30);
+    expect(loadConfig({ ...base, RATE_LIMIT_PER_MINUTE: "0" }).userRateLimit).toBeUndefined();
+  });
+
   it("requires DATABASE_URL", () => {
     expect(() => loadConfig({})).toThrow();
   });

@@ -2,6 +2,7 @@ import express, { type Express, type RequestHandler } from "express";
 import type { Db } from "./db.ts";
 import { devAuth, requireGroupMember } from "./http/auth.ts";
 import { errorHandler, notFound } from "./http/errors.ts";
+import { perUserRateLimit } from "./http/rateLimit.ts";
 import { requestLog } from "./http/requestLog.ts";
 import { balancesRouter } from "./modules/balances/balances.routes.ts";
 import { expensesRouter } from "./modules/expenses/expenses.routes.ts";
@@ -16,6 +17,11 @@ export interface AppDeps {
    * AUTH_MODE; the integration tests leave it out and get the dev stub.
    */
   authenticate?: RequestHandler;
+  /**
+   * Requests each signed-in user may make per window (threat model: denial of service). server.ts sets it
+   * from config; left out, there is no limit, which is what most integration tests want.
+   */
+  userRateLimit?: { limit: number; windowMs: number };
   logRequests?: boolean;
   version?: string;
 }
@@ -26,7 +32,8 @@ export interface AppDeps {
  *
  * Request path: HTTP layer (validation, auth) -> module service (business rules) -> Prisma -> Postgres.
  */
-export function createApp({ db, authenticate = devAuth(db), logRequests = false, version = "dev" }: AppDeps): Express {
+export function createApp(deps: AppDeps): Express {
+  const { db, authenticate = devAuth(db), userRateLimit, logRequests = false, version = "dev" } = deps;
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "10kb" }));
@@ -41,14 +48,18 @@ export function createApp({ db, authenticate = devAuth(db), logRequests = false,
     }
   });
 
-  app.use("/users/me", authenticate, userGroupsRouter(db));
-  app.use("/invites", authenticate, invitesRouter(db));
+  // Every authenticated route: verify who is calling, then count the request against that user.
+  const limit: RequestHandler = userRateLimit ? perUserRateLimit(userRateLimit) : (_req, _res, next) => next();
+  const signedIn = [authenticate, limit];
+
+  app.use("/users/me", signedIn, userGroupsRouter(db));
+  app.use("/invites", signedIn, invitesRouter(db));
 
   const group = express.Router({ mergeParams: true });
   group.use(groupsRouter(db), balancesRouter(db), expensesRouter(db), settlementsRouter(db));
   // POST /groups (create) must come before the /groups/:groupId membership check.
-  app.post("/groups", authenticate, createGroupHandler(db));
-  app.use("/groups/:groupId", authenticate, requireGroupMember(db), group);
+  app.post("/groups", signedIn, createGroupHandler(db));
+  app.use("/groups/:groupId", signedIn, requireGroupMember(db), group);
 
   app.use(notFound);
   app.use(errorHandler);

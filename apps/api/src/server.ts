@@ -15,6 +15,7 @@ const authenticate =
 const app = createApp({
   db,
   authenticate,
+  userRateLimit: config.userRateLimit,
   logRequests: config.logRequests,
   version: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? "dev",
 });

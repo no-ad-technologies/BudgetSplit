@@ -96,6 +96,7 @@ name doesn't contain `test`.
 Every route except `/health` needs `Authorization: Bearer <Firebase ID token>` and returns 401 without a valid one
 (US-01). Locally, with `AUTH_MODE=dev`, the API accepts an `X-User-Id` header instead, as in the examples above;
 production refuses to start in that mode. Group routes return 403 to non-members.
+Each signed-in user gets 120 requests a minute, then `429` with `Retry-After` ([ADR 0008](docs/adr/0008-per-user-rate-limit.md)).
 Errors always look like `{ "error": { "code", "message", "details?" } }`.
 
 ## How we work

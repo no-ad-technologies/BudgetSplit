@@ -80,7 +80,7 @@ availability (low). The full justification and the trade-offs (T1–T4) are in t
 | Attribute | Where it shows up in the code |
 | --- | --- |
 | Reliability | `split.ts` (integer cents), `compute.ts` (sum-to-zero check), transaction + idempotency in `expenses.service.ts`, CHECK constraints in the migration |
-| Security | `http/auth.ts` + `http/tokenVerifier.ts` (Firebase ID token verified on every request, ADR 0007; membership check), `config.ts` (refuses dev auth in production), zod strict bodies |
+| Security | `http/auth.ts` + `http/tokenVerifier.ts` (Firebase ID token verified on every request, ADR 0007; membership check), `config.ts` (refuses dev auth in production), `http/rateLimit.ts` (per-user limit, ADR 0008), zod strict bodies |
 | Usability | one-screen add-expense, even split by default, inline errors (`expenseDraft.ts`) |
 | Maintainability | `packages/shared` contract, one module per domain area, CI on every PR |
 | Resilience | external calls will sit behind adapters with timeouts (US-08, US-11); the ledger never depends on them |

@@ -26,6 +26,7 @@ export const ApiErrorCode = {
   validationFailed: "validation_failed",
   invalidJson: "invalid_json",
   unauthenticated: "unauthenticated",
+  rateLimited: "rate_limited",
   notAMember: "not_a_member",
   invalidGroupId: "invalid_group_id",
   groupNotFound: "group_not_found",
