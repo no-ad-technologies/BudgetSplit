@@ -96,3 +96,4 @@ Errors always look like `{ "error": { "code", "message", "details?" } }`.
 - **CI:** [.github/workflows/ci.yml](.github/workflows/ci.yml) runs on **every push to every branch** and on every PR — API (typecheck, migrate, test, build, audit), shared + mobile (typecheck, test, Metro bundle), Docker image build.
 - **Deploy:** Render Blueprint in [render.yaml](render.yaml); `main` deploys only after CI passes.
 - **Decisions:** [docs/adr/](docs/adr/) and [CHANGELOG.md](CHANGELOG.md). Architecture overview: [docs/architecture.md](docs/architecture.md).
+- **Security:** threat model (session hijacking and denial of service) in [docs/security/threat-model.md](docs/security/threat-model.md).

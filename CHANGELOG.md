@@ -27,6 +27,8 @@ Each entry names the story it serves, so any change can be traced back (and reve
   Group screen: "Record payment" and a "Waiting for confirmation" card.
 - Equivalence-partitioning table for `splitByPercent` and `splitExact`
   ([docs/testing/equivalence-partitioning.md](docs/testing/equivalence-partitioning.md)).
+- Threat model for Milestone 4: session hijacking and denial of service, with the measures implemented
+  and proposed for each ([docs/security/threat-model.md](docs/security/threat-model.md), ADR 0009).
 - AI-generated tests for `splitByPercent`, evaluated against 9 seeded bugs with
   `npm run test:seeded-bugs -w @budgetsplit/api` ([docs/ai/m3-ai-generated-tests.md](docs/ai/m3-ai-generated-tests.md)).
 
