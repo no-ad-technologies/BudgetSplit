@@ -9,6 +9,15 @@ describe("loadConfig", () => {
     expect(config).toMatchObject({ nodeEnv: "development", port: 4000, authMode: "dev", logRequests: true });
   });
 
+  it("the AI summary is off without an API key and uses the small model by default", () => {
+    expect(loadConfig({ ...base }).llm).toBeNull();
+    expect(loadConfig({ ...base, ANTHROPIC_API_KEY: "sk-ant-test-0123456789abcdef" }).llm).toEqual({
+      apiKey: "sk-ant-test-0123456789abcdef",
+      model: "claude-haiku-5-5",
+      dailyCallLimit: 500,
+    });
+  });
+
   it("refuses to start production with the dev auth stub unless explicitly allowed", () => {
     expect(() => loadConfig({ ...base, NODE_ENV: "production" })).toThrow(/Refusing to start/);
     expect(loadConfig({ ...base, NODE_ENV: "production", ALLOW_DEV_AUTH_IN_PRODUCTION: "true" }).nodeEnv).toBe(

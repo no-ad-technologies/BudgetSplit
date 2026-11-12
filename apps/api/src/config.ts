@@ -3,6 +3,11 @@ import { z } from "zod";
 const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
+  /** Anthropic API key for the AI summary (US-11). A secret: set it in Render, never in the repo. Optional. */
+  ANTHROPIC_API_KEY: z.string().trim().min(20).optional(),
+  LLM_MODEL: z.string().trim().regex(/^[a-z0-9.-]{3,60}$/).default("claude-haiku-5-5"),
+  /** Hard ceiling on paid model calls per UTC day, across all users. */
+  LLM_DAILY_CALL_LIMIT: z.coerce.number().int().min(1).max(100_000).default(500),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   /**
    * "firebase" verifies a Firebase ID token on every request (US-01, ADR 0007).
@@ -27,6 +32,8 @@ export type AuthConfig = { mode: "dev" } | { mode: "firebase"; firebaseProjectId
 export interface Config {
   nodeEnv: "development" | "test" | "production";
   port: number;
+  /** Null when no API key is set: the summary endpoint still returns the numbers. */
+  llm: { apiKey: string; model: string; dailyCallLimit: number } | null;
   databaseUrl: string;
   authMode: "dev" | "firebase";
   auth: AuthConfig;
@@ -55,6 +62,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return {
     nodeEnv: parsed.NODE_ENV,
     port: parsed.PORT,
+    llm: parsed.ANTHROPIC_API_KEY
+      ? { apiKey: parsed.ANTHROPIC_API_KEY, model: parsed.LLM_MODEL, dailyCallLimit: parsed.LLM_DAILY_CALL_LIMIT }
+      : null,
     databaseUrl: parsed.DATABASE_URL,
     authMode: parsed.AUTH_MODE,
     auth,

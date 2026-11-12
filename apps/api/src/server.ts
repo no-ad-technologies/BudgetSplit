@@ -5,8 +5,14 @@ import { createDb } from "./db.ts";
 import { devAuth, tokenAuth } from "./http/auth.ts";
 import { createFirebaseVerifier } from "./http/tokenVerifier.ts";
 import { logger } from "./logger.ts";
+import { createAnthropicClient } from "./modules/insights/llm.ts";
+import { DEFAULT_QUOTA, SummaryQuota } from "./modules/insights/quota.ts";
 
 const config = loadConfig();
+const insights = {
+  llm: config.llm ? createAnthropicClient({ apiKey: config.llm.apiKey, model: config.llm.model }) : null,
+  quota: new SummaryQuota({ ...DEFAULT_QUOTA, perDay: config.llm?.dailyCallLimit ?? DEFAULT_QUOTA.perDay }),
+};
 const db = createDb(config.databaseUrl);
 const authenticate =
   config.auth.mode === "firebase"
@@ -18,10 +24,11 @@ const app = createApp({
   userRateLimit: config.userRateLimit,
   logRequests: config.logRequests,
   version: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? "dev",
+  insights,
 });
 
 const server = app.listen(config.port, () => {
-  logger.info({ port: config.port, env: config.nodeEnv, auth: config.authMode }, "listening");
+  logger.info({ port: config.port, env: config.nodeEnv, auth: config.authMode, llm: config.llm?.model ?? "off" }, "listening");
 });
 
 // Render sends SIGTERM before replacing an instance; finish in-flight requests, then close the pool.

@@ -9,6 +9,8 @@ import { expensesRouter } from "./modules/expenses/expenses.routes.ts";
 import { createGroupHandler, groupsRouter, invitesRouter } from "./modules/groups/groups.routes.ts";
 import { userGroupsRouter } from "./modules/groups/userGroups.routes.ts";
 import { settlementsRouter } from "./modules/settlements/settlements.routes.ts";
+import { insightsRouter } from "./modules/insights/insights.routes.ts";
+import type { InsightsDeps } from "./modules/insights/insights.service.ts";
 
 export interface AppDeps {
   db: Db;
@@ -24,6 +26,8 @@ export interface AppDeps {
   userRateLimit?: { limit: number; windowMs: number };
   logRequests?: boolean;
   version?: string;
+  /** The model client and quota behind the AI summary (US-11). Left out, summaries are "unavailable". */
+  insights?: InsightsDeps;
 }
 
 /**
@@ -56,7 +60,7 @@ export function createApp(deps: AppDeps): Express {
   app.use("/invites", signedIn, invitesRouter(db));
 
   const group = express.Router({ mergeParams: true });
-  group.use(groupsRouter(db), balancesRouter(db), expensesRouter(db), settlementsRouter(db));
+  group.use(groupsRouter(db), balancesRouter(db), expensesRouter(db), settlementsRouter(db), insightsRouter(db, deps.insights));
   // POST /groups (create) must come before the /groups/:groupId membership check.
   app.post("/groups", signedIn, createGroupHandler(db));
   app.use("/groups/:groupId", signedIn, requireGroupMember(db), group);
